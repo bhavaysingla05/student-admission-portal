@@ -1,5 +1,5 @@
 import React, { useReducer, useEffect, useRef } from "react";
-import { sendOtp, verifyOtp } from "../services/authService";
+import { sendOtp, verifyOtp, portalLogin } from "../services/authService";
 import toast from "react-hot-toast";
 import {
   GraduationCap,
@@ -85,25 +85,28 @@ export default function Login() {
 
       const data = res?.data || res;
 
-      const token = data?.token;
-      if (!token) {
-        toast.error("Login failed: No token received");
-        return;
-      }
-
-      // ✅ store token
-      sessionStorage.setItem("authToken", token);
-
-      // ✅ store USER (Guest) data
+      // ✅ 1. Store USER (Guest) data
       sessionStorage.setItem(
         "userProfile",
         JSON.stringify({
-          name: data.name,
-          email: data.email,
-          phone: data.phone,
+          name: data.name || "User",
+          email: data.email || "",
+          phone: state.mobile, // Ensure mobile is stored for admission list search
         })
       );
 
+      // ✅ 2. Perform PORTAL LOGIN (Background) to get Master Token
+      console.log("🔄 Attempting Portal Login...");
+      const portalRes = await portalLogin();
+      console.log("✅ PORTAL LOGIN SUCCESS:", portalRes);
+
+      const token = portalRes?.token;
+      if (!token) {
+        throw new Error("No token received from Portal Login");
+      }
+
+      // ✅ 3. Store Master Token
+      sessionStorage.setItem("authToken", token);
       sessionStorage.setItem("isLoggedIn", "true");
 
       toast.success("Login Successful");
@@ -159,8 +162,8 @@ export default function Login() {
             {/* MOBILE INPUT */}
             <div
               className={`absolute w-full transition-all duration-500 ${state.step === "mobile"
-                  ? "translate-x-0"
-                  : "-translate-x-[120%]"
+                ? "translate-x-0"
+                : "-translate-x-[120%]"
                 }`}
             >
               <h2 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6 text-[#F68B1E]">
@@ -192,8 +195,8 @@ export default function Login() {
             {/* OTP INPUT */}
             <div
               className={`absolute w-full transition-all duration-500 ${state.step === "otp"
-                  ? "translate-x-0"
-                  : "translate-x-[120%]"
+                ? "translate-x-0"
+                : "translate-x-[120%]"
                 }`}
             >
               <h2 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6 text-[#F68B1E]">

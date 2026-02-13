@@ -45,6 +45,31 @@ export const verifyOtp = async (phone: string, otp: string) => {
   return res.json();
 };
 
+/* --------------------------------------
+   PORTAL LOGIN (Bypass for Token)
+---------------------------------------- */
+const PORTAL_MOBILE = "9199999911";
+const PORTAL_PASSWORD = "portal@lingayas";
+
+export const portalLogin = async () => {
+  const res = await fetch("https://api.odpay.in/login", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      mobile: PORTAL_MOBILE,
+      password: PORTAL_PASSWORD,
+    }),
+  });
+
+  if (!res.ok) {
+    throw new Error("Portal login failed");
+  }
+
+  return res.json();
+};
+
 
 
 

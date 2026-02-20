@@ -1,57 +1,48 @@
+/* ─── GLOBAL RESETS ─── */
 body {
   margin: 0;
   padding: 0;
-  font-family: sans-serif;
-  background: #f5f5f5;
+  font-family: 'Inter', 'Lato', system-ui, -apple-system, sans-serif;
+  background: #f8f6f3;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-.container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
+/* ─── SMOOTH SCROLLBAR ─── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 100px;
+}
+::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+
+/* ─── LOADING SPINNER ─── */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+.loader {
+  width: 28px; height: 28px;
+  border: 3px solid #e5e7eb;
+  border-top-color: #f97316;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
 }
 
-.card {
-  width: 320px;
-  background: #ffffff;
-  padding: 30px;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  text-align: center;
+/* ─── PAGE FADE-IN ─── */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.page-enter {
+  animation: fadeIn 0.35s ease-out;
 }
 
-h2 {
-  margin-bottom: 20px;
-  color: #333;
+/* ─── CARD HOVER ─── */
+.card-hover {
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
 }
-
-input {
-  width: 100%;
-  padding: 12px;
-  margin-bottom: 12px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  font-size: 16px;
-}
-
-button {
-  width: 100%;
-  padding: 12px;
-  background: #800000;
-  color: #fff;
-  font-size: 16px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-button:hover {
-  background: #a00000;
-}
-
-.message {
-  margin-top: 10px;
-  color: #444;
-  font-size: 14px;
+.card-hover:hover {
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+  transform: translateY(-1px);
 }

@@ -1,50 +1,40 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { FileText, CreditCard, User } from "lucide-react";
 
+const tabs = [
+  { path: "/application", label: "Application", shortLabel: "App", icon: FileText },
+  { path: "/payments", label: "Payments", shortLabel: "Pay", icon: CreditCard },
+  { path: "/profile", label: "Profile", shortLabel: "Me", icon: User },
+];
+
 const FooterTabs = () => {
   const navigate = useNavigate();
   const { pathname } = useLocation();
 
   return (
-    <div className="fixed bottom-0 left-0 w-full bg-white border-t shadow-md flex justify-around px-2 sm:px-4 md:px-6 py-2 z-50">
-
-      {/* Application */}
-      <button
-        onClick={() => navigate("/application")}
-        className={`flex flex-col items-center text-[10px] sm:text-xs gap-0.5 sm:gap-1 ${pathname === "/application" ? "text-orange-600 font-bold" : "text-gray-500"}`}
-      >
-        <FileText className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={2} />
-        <span className="hidden sm:inline">Application</span>
-        <span className="sm:hidden">App</span>
-      </button>
-
-      {/* Payments */}
-      <button
-        onClick={() => navigate("/payments")}
-        className={`flex flex-col items-center text-[10px] sm:text-xs gap-0.5 sm:gap-1 ${pathname === "/payments" ? "text-orange-600 font-bold" : "text-gray-500"}`}
-      >
-        <CreditCard className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={2} />
-        Payments
-      </button>
-
-      {/* Queries */}
-      {/* <button
-        onClick={() => navigate("/queries")}
-        className={`flex flex-col items-center text-[10px] sm:text-xs gap-0.5 sm:gap-1 ${pathname === "/queries" ? "text-orange-600 font-bold" : "text-gray-500"}`}
-      >
-        <HelpCircle className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={2} />
-        Queries
-      </button> */}
-
-      {/* Profile */}
-      <button
-        onClick={() => navigate("/profile")}
-        className={`flex flex-col items-center text-[10px] sm:text-xs gap-0.5 sm:gap-1 ${pathname === "/profile" ? "text-orange-600 font-bold" : "text-gray-500"}`}
-      >
-        <User className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={2} />
-        Profile
-      </button>
-
+    <div className="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 shadow-[0_-4px_16px_rgba(0,0,0,0.06)] flex justify-around px-2 py-1.5 sm:py-2 z-50">
+      {tabs.map(({ path, label, shortLabel, icon: Icon }) => {
+        const active = pathname.startsWith(path);
+        return (
+          <button
+            key={path}
+            onClick={() => navigate(path)}
+            className={`
+              relative flex flex-col items-center gap-0.5 px-5 py-1.5 rounded-lg transition-all
+              ${active
+                ? "text-orange-600 bg-orange-50"
+                : "text-gray-400 hover:text-gray-600"
+              }
+            `}
+          >
+            <Icon className="w-5 h-5" strokeWidth={active ? 2.5 : 1.8} />
+            <span className={`text-[10px] sm:text-xs ${active ? "font-bold" : "font-medium"}`}>
+              <span className="hidden sm:inline">{label}</span>
+              <span className="sm:hidden">{shortLabel}</span>
+            </span>
+          </button>
+        );
+      })}
     </div>
   );
 };

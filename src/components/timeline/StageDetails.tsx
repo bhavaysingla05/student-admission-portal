@@ -104,12 +104,12 @@ const StageDetails = ({
 
     return (
       <div key={field._id} className="flex flex-col gap-1">
-        <label className="text-xs text-gray-500">{field.displayName}</label>
+        <label className="text-[11px] text-gray-400 font-medium uppercase tracking-wide">{field.displayName}</label>
 
         {editMode && isActiveStage ? (
           field.fieldType === "selectBox" ? (
             <select
-              className="border rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-400 transition-colors"
               value={value ?? ""}
               onChange={(e) => onChange(field.key, e.target.value)}
             >
@@ -121,13 +121,13 @@ const StageDetails = ({
           ) : field.fieldType === "date" ? (
             <input
               type="date"
-              className="border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-400 transition-colors"
               value={value ? value.slice(0, 10) : ""}
               onChange={(e) => onChange(field.key, e.target.value)}
             />
           ) : (
             <input
-              className="border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-400 transition-colors"
               value={value ?? ""}
               onChange={(e) => onChange(field.key, e.target.value)}
             />
@@ -142,69 +142,71 @@ const StageDetails = ({
   };
 
   return (
-    <div className="bg-white border rounded-xl p-6 space-y-4">
+    <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
 
       {/* ================= HEADER ================= */}
-      <div className="flex justify-between items-center">
+      <div className="border-b border-gray-100 px-4 py-3 flex justify-between items-center">
         <div>
-          <h3 className="font-semibold text-gray-800">{stage.stage}</h3>
-          <span className="text-xs text-blue-600">{stage.status.toUpperCase()}</span>
+          <h3 className="font-bold text-gray-900">{stage.stage}</h3>
+          <span className="text-[11px] font-semibold text-orange-600 uppercase tracking-wide">{stage.status}</span>
         </div>
 
         {isActiveStage && (
-          <div className="flex gap-3">
+          <div className="flex gap-2">
             <button
               onClick={() => setEditMode((p) => !p)}
-              className="text-sm text-blue-600"
+              className="text-xs font-medium px-3 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors shadow-sm"
             >
-              {editMode ? "Cancel" : "Edit"}
+              {editMode ? "Cancel" : "✏️ Edit"}
             </button>
             {editMode && (
               <button
                 onClick={onSave}
                 disabled={saving}
-                className="text-sm text-green-600"
+                className="text-xs font-medium px-3 py-1.5 rounded-lg bg-orange-500 text-white hover:bg-orange-600 disabled:opacity-50 transition-colors shadow-sm"
               >
-                {saving ? "Saving…" : "Save"}
+                {saving ? "Saving…" : "💾 Save"}
               </button>
             )}
           </div>
         )}
       </div>
 
-      {/* ================= TABS ================= */}
-      {visibleTabs.length > 1 && (
-        <div className="flex flex-wrap gap-1 border-b">
-          {visibleTabs.map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`
-                px-3 py-2 text-xs sm:text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap
+      <div className="px-4 py-3 space-y-3">
+        {/* ================= TABS ================= */}
+        {visibleTabs.length > 1 && (
+          <div className="flex flex-wrap gap-1.5 bg-gray-100 rounded-lg p-1">
+            {visibleTabs.map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`
+                px-3 py-1.5 text-xs sm:text-sm font-medium rounded-md transition-all whitespace-nowrap
                 ${safeTab === tab
-                  ? "border-blue-600 text-blue-700"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }
+                    ? "bg-gray-800 text-white shadow-sm"
+                    : "text-gray-500 hover:text-gray-700 hover:bg-gray-200/60"
+                  }
               `}
-            >
-              {tab}
-            </button>
-          ))}
-        </div>
-      )}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
+        )}
 
-      {/* ================= FIELDS (active tab only) ================= */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-        {(grouped[safeTab] || []).map(renderField)}
+        {/* ================= FIELDS (active tab only) ================= */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+          {(grouped[safeTab] || []).map(renderField)}
+        </div>
+
+        {/* ================= PAYMENT SUMMARY ================= */}
+        {student?.transactions?.length > 0 && (
+          <div className="pt-3 border-t border-gray-100">
+            <h4 className="text-sm font-semibold text-gray-700 mb-2">Payment Summary</h4>
+            <PaymentSummary student={student} stage={stage} />
+          </div>
+        )}
       </div>
-
-      {/* ================= PAYMENT SUMMARY ================= */}
-      {student?.transactions?.length > 0 && (
-        <div className="pt-4 border-t">
-          <h4 className="text-sm font-semibold text-gray-700 mb-2">Payment Summary</h4>
-          <PaymentSummary student={student} stage={stage} />
-        </div>
-      )}
     </div>
   );
 };

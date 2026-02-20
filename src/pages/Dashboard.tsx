@@ -13,28 +13,19 @@ const Dashboard = () => {
     const fetchData = async () => {
       try {
         const res = await listAdmissionStudents();
-
-        console.log("✅ FULL LIST API RESPONSE:", res);
-        console.log("✅ RESPONSE.DATA:", res.data);
-
         const list = res.data?.data || [];
         setStudents(list);
       } catch (err: any) {
         console.error("❌ Admission list API failed:", err);
-        setError(
-          err?.response?.data?.message ||
-            "Failed to load applications"
-        );
+        setError(err?.response?.data?.message || "Failed to load applications");
       } finally {
         setLoading(false);
       }
     };
-
     fetchData();
   }, []);
 
   const handleViewApplication = (student: any) => {
-    // Store selected admission _id for downstream pages
     if (typeof window !== "undefined") {
       sessionStorage.setItem("selectedStudentId", student._id);
     }
@@ -43,36 +34,38 @@ const Dashboard = () => {
 
   const firstName = students[0]?.name || "Student";
 
-  if (loading) {
-    return (
-      <div className="bg-[#FFF8F0] min-h-screen pb-20 sm:pb-24">
-        <Header studentName={firstName} />
-        <div className="flex justify-center items-center h-[60vh] text-gray-500">
-          Loading applications...
-        </div>
-        <FooterTabs />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="bg-[#FFF8F0] min-h-screen pb-20 sm:pb-24">
-        <Header studentName={firstName} />
-        <div className="flex justify-center items-center h-[60vh] text-red-500 px-4 text-center">
-          {error}
-        </div>
-        <FooterTabs />
-      </div>
-    );
-  }
-
   return (
-    <div className="bg-[#FFF8F0] min-h-screen pb-20 sm:pb-24">
+    <div className="bg-gray-100 min-h-screen pb-20 sm:pb-24">
       <Header studentName={firstName} />
 
-      <div className="p-3 sm:p-4 md:p-6 space-y-4">
-        {students.map((student) => (
+      <div className="page-enter max-w-5xl mx-auto px-3 sm:px-4 py-4 space-y-3">
+        <div>
+          <h2 className="text-base sm:text-lg font-bold text-gray-900">My Applications</h2>
+          <p className="text-xs text-gray-500">
+            {loading
+              ? "Loading..."
+              : `${students.length} application${students.length !== 1 ? "s" : ""} found`}
+          </p>
+        </div>
+
+        {loading && (
+          <div className="flex justify-center items-center h-[40vh]">
+            <div className="loader" />
+          </div>
+        )}
+
+        {error && !loading && (
+          <div className="flex justify-center items-center h-[40vh]">
+            <div className="text-center">
+              <p className="text-red-500 font-medium">{error}</p>
+              <button onClick={() => window.location.reload()} className="mt-3 text-sm text-orange-600 hover:underline">
+                Try again
+              </button>
+            </div>
+          </div>
+        )}
+
+        {!loading && !error && students.map((student) => (
           <ApplicationCard
             key={student._id}
             student={student}

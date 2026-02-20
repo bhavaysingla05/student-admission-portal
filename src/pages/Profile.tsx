@@ -2,20 +2,7 @@ import { useEffect, useState } from "react";
 import Header from "../components/Header";
 import FooterTabs from "../components/FooterTabs";
 
-/* -----------------------------------------
-   FIELD GROUP CONFIG
------------------------------------------- */
-const GROUPS: Record<string, string[]> = {
-  "Personal Details": [
-    "name",
-    "phone",
-    "email",
-  ],
-};
-
-/* -----------------------------------------
-   UTILITIES
------------------------------------------- */
+/* ---- UTILITIES ---- */
 const formatLabel = (key: string) =>
   key.replace(/([A-Z])/g, " $1").replace(/^./, (s) => s.toUpperCase());
 
@@ -24,9 +11,7 @@ const formatValue = (value: any) => {
   return String(value);
 };
 
-/* -----------------------------------------
-   COMPONENT
------------------------------------------- */
+/* ---- COMPONENT ---- */
 const Profile = () => {
   const [student, setStudent] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -34,12 +19,8 @@ const Profile = () => {
   useEffect(() => {
     try {
       const stored = sessionStorage.getItem("userProfile");
-
-      if (stored) {
-        setStudent(JSON.parse(stored));
-      } else {
-        setStudent(null);
-      }
+      if (stored) setStudent(JSON.parse(stored));
+      else setStudent(null);
     } catch (e) {
       console.error("Failed to read profile from sessionStorage", e);
       setStudent(null);
@@ -49,52 +30,80 @@ const Profile = () => {
   }, []);
 
   if (loading) {
-    return <div className="p-6 text-gray-500">Loading profile…</div>;
+    return (
+      <div className="min-h-screen bg-gray-100 pb-20 sm:pb-24">
+        <Header />
+        <div className="flex justify-center items-center h-[60vh]">
+          <div className="loader" />
+        </div>
+        <FooterTabs />
+      </div>
+    );
   }
 
   if (!student) {
-    return <div className="p-6 text-red-500">No profile data found</div>;
+    return (
+      <div className="min-h-screen bg-gray-100 pb-20 sm:pb-24">
+        <Header />
+        <div className="flex flex-col items-center justify-center h-[60vh] text-gray-400">
+          <p className="text-sm">No profile data found</p>
+        </div>
+        <FooterTabs />
+      </div>
+    );
   }
 
+  // Initials avatar
+  const initials = (student.name || "S")
+    .split(" ")
+    .map((w: string) => w[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+
+  // Profile fields to display
+  const profileFields = ["name", "phone", "email"].filter(
+    (k) => student[k]
+  );
+
   return (
-    <div className="min-h-screen bg-[#FFF8F0] pb-20 sm:pb-24">
-      <Header studentName={student.name || "t"} />
+    <div className="min-h-screen bg-gray-100 pb-20 sm:pb-24">
+      <Header studentName={student.name || "Student"} />
 
-      <div className="max-w-6xl mx-auto p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6 md:space-y-8">
-        <h1 className="text-xl sm:text-2xl font-bold">Profile</h1>
+      <div className="page-enter max-w-3xl mx-auto p-4 sm:p-6 space-y-6">
+        {/* Avatar + Name hero */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col items-center text-center">
+          <div className="w-16 h-16 rounded-full bg-orange-100 text-orange-700 flex items-center justify-center text-xl font-bold mb-3">
+            {initials}
+          </div>
+          <h1 className="text-xl font-bold text-gray-900">{student.name}</h1>
+          {student.email && (
+            <p className="text-sm text-gray-500 mt-0.5">{student.email}</p>
+          )}
+        </div>
 
-        {Object.entries(GROUPS).map(([group, keys]) => {
-          const visibleKeys = keys.filter((k) => student[k]);
+        {/* Details card */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+          <h2 className="text-sm font-semibold text-gray-700 mb-4">
+            Personal Details
+          </h2>
 
-          if (visibleKeys.length === 0) return null;
-
-          return (
-            <div
-              key={group}
-              className="bg-white rounded-xl sm:rounded-2xl border shadow-sm p-4 sm:p-5 md:p-6"
-            >
-              <h2 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">
-                {group}
-              </h2>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-xs sm:text-sm">
-                {visibleKeys.map((key) => (
-                  <div
-                    key={key}
-                    className="flex flex-col sm:flex-row justify-between gap-1 sm:gap-0 border rounded-lg px-3 sm:px-4 py-2 bg-gray-50"
-                  >
-                    <span className="text-gray-600">
-                      {formatLabel(key)}
-                    </span>
-                    <span className="font-medium text-gray-900 break-words text-right sm:text-left">
-                      {formatValue(student[key])}
-                    </span>
-                  </div>
-                ))}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+            {profileFields.map((key) => (
+              <div
+                key={key}
+                className="flex flex-col gap-0.5 bg-gray-50 rounded-lg px-4 py-3"
+              >
+                <span className="text-[11px] text-gray-400 uppercase tracking-wide font-medium">
+                  {formatLabel(key)}
+                </span>
+                <span className="font-medium text-gray-900">
+                  {formatValue(student[key])}
+                </span>
               </div>
-            </div>
-          );
-        })}
+            ))}
+          </div>
+        </div>
       </div>
 
       <FooterTabs />

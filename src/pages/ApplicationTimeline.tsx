@@ -55,14 +55,21 @@ const ApplicationTimeline = () => {
     }
   };
 
-  if (!student) return <div className="p-6">Loading…</div>;
+  if (!student)
+    return (
+      <div className="min-h-screen bg-gray-100 pb-24">
+        <Header />
+        <div className="flex justify-center items-center h-[60vh]"><div className="loader" /></div>
+        <FooterTabs />
+      </div>
+    );
 
   return (
-    <div className="min-h-screen bg-[#FFF8F0] pb-24">
+    <div className="min-h-screen bg-gray-100 pb-24">
       <Header studentName={student.name} />
 
-      <div className="p-4">
-        <h1 className="text-xl font-bold mb-6">
+      <div className="page-enter max-w-5xl mx-auto p-4 sm:p-6">
+        <h1 className="text-lg sm:text-xl font-bold text-gray-900 mb-4">
           Application Timeline
         </h1>
 

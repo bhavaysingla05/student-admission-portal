@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const BASE_API_URL = "https://fee2-api.odpay.in/api";
+const BASE_API_URL = "https://api.odpay.in/api";
 
 const getAuthToken = () => {
     return sessionStorage.getItem("authToken") || "";
@@ -37,16 +37,19 @@ export const uploadDocument = async (file: File, studentId: string, fieldName: s
     });
 
     // Step 3: Notify ERP / Save Document
-    const finalData = new FormData();
-    finalData.append("id", studentId);
-    finalData.append("qac", "LV");
-    finalData.append("presignedKey", "true");
-    finalData.append(fieldName, publicURL);
+    const finalData:any = new FormData();
+    let formData = {
+        presignedKey: true,
+        [fieldName]: publicURL
+    }
+    // finalData.append("id", studentId);
+    // finalData.append("qac", "LV");
+    // finalData.append("presignedKey", true);
+    // finalData.append(fieldName, publicURL);
 
-    const saveRes = await axios.post(`${BASE_API_URL}/uploadAdmissionDocuments?id=${studentId}&qac=LV`, finalData, {
+    const saveRes = await axios.post(`${BASE_API_URL}/uploadAdmissionDocuments?id=${studentId}&qac=LV`, formData, {
         headers: {
-            Authorization: token,
-            "Content-Type": "multipart/form-data"
+            Authorization: token
         }
     });
 

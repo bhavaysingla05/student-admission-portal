@@ -135,10 +135,14 @@ export default function Login() {
 
         {/* LOGO + TEXT */}
         <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 mb-10 relative">
-          <img src="/logo.png" alt="OkieDokie" className="w-20 sm:w-28 h-auto" />
+          <div className="flex items-center gap-4">
+            <img src="/entitylogo.jpg" alt="Lingaya's Vidyapeeth" className="w-24 sm:w-32 h-auto shadow-sm rounded-lg" />
+            <div className="h-12 w-px bg-orange-200 hidden sm:block mx-1" />
+            {/* <img src="/logo.png" alt="OkieDokie" className="w-12 sm:w-16 h-auto opacity-80" /> */}
+          </div>
           <div className="text-center sm:text-left">
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-[#F68B1E] leading-tight">
-              Welcome to Okie Dokie
+              Welcome to Lingaya's Vidyapeeth
               <br /> Admission Portal
             </h1>
             <p className="text-gray-700 mt-2 text-sm sm:text-base lg:text-lg max-w-md">
@@ -268,9 +272,18 @@ export default function Login() {
         </div>
       </div>
 
-      {/* FOOTER */}
-      <footer className="absolute bottom-2 w-full text-center text-xs sm:text-sm text-gray-600 px-4">
-        Crafted with ❤️ by OkieDokie
+      {/* PARTNER LOGO (Bottom Right) */}
+      <div className="absolute bottom-6 right-8 z-20 hidden sm:flex items-center gap-2 px-1">
+        <span className="text-[10px] font-bold text-[#F68B1E] uppercase tracking-widest whitespace-nowrap">
+          Campus Automation Partner
+        </span>
+        <div className="h-3 w-px bg-gray-300 mx-1" />
+        <img src="/logo.png" alt="OkieDokie" className="h-6 w-auto" />
+      </div>
+
+      {/* FOOTER (Bottom Center) */}
+      <footer className="absolute bottom-3 w-full text-center text-[10px] sm:text-xs text-gray-400 px-4">
+        © {new Date().getFullYear()} Lingaya's Vidyapeeth | Powered by OkieDokie
       </footer>
     </div>
   );

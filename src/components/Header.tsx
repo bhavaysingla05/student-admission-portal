@@ -24,14 +24,19 @@ const Header: React.FC<HeaderProps> = ({ studentName }) => {
       {/* LEFT */}
       <div className="flex items-center gap-3 min-w-0 flex-1">
         <img
-          src="/logo.png"
-          alt="Logo"
+          src="/entitylogo.jpg"
+          alt="Lingaya's Vidyapeeth"
           className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg flex-shrink-0"
         />
-        <h1 className="text-sm sm:text-base font-bold text-gray-900 truncate tracking-tight">
-          <span className="hidden sm:inline">Student Admission Portal</span>
-          <span className="sm:hidden">Admission Portal</span>
-        </h1>
+        <div className="flex flex-col leading-none">
+          <h1 className="text-sm sm:text-base font-bold text-gray-900 truncate tracking-tight">
+            Lingaya's Vidyapeeth
+          </h1>
+          <div className="flex items-center gap-1 mt-0.5">
+            <span className="text-[9px] uppercase font-semibold text-gray-400">Powered by Okie Dokie</span>
+            <img src="/logo.png" alt="OkieDokie" className="h-5 w-auto " />
+          </div>
+        </div>
       </div>
 
       {/* RIGHT */}

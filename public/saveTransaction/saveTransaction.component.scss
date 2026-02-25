@@ -1,0 +1,122 @@
+.gateWayImg{
+    height: 30px;
+    width: 72px;
+    object-fit: contain;
+    padding-top: .5rem;
+    padding-left: .5rem;
+}
+.card {
+    border-radius: 8px;
+    img{
+        object-fit: contain;
+    }
+}
+.payment-loading-overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background-color: rgba(0, 0, 0, 0.7) !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    z-index: 99999 !important;
+  }
+  
+  .payment-loading-popup {
+    background: white !important;
+    padding: 40px !important;
+    border-radius: 12px !important;
+    text-align: center !important;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3) !important;
+    min-width: 300px !important;
+    z-index: 100000 !important;
+    position: relative !important;
+    
+    .spinner-border {
+      width: 3rem !important;
+      height: 3rem !important;
+      border-width: 0.3em !important;
+    }
+    
+    h4 {
+      margin-top: 20px !important;
+      margin-bottom: 10px !important;
+      font-weight: 600 !important;
+      color: #333 !important;
+    }
+    
+    p {
+      color: #666 !important;
+      margin-bottom: 0 !important;
+      font-size: 14px !important;
+    }
+  }
+  .spinner-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100px; /* or full screen: 100vh */
+  }
+  .input-box-container {
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 8px;
+}
+
+.small-input {
+  width: 150px;
+}
+
+// Override any modals or dialogs when payment is processing
+::ng-deep .modal,
+::ng-deep .modal-dialog,
+::ng-deep .cdk-overlay-container,
+::ng-deep .mat-dialog-container {
+  z-index: 9000 !important;
+}
+
+// Payment Loading Popup
+.payment-loading-overlay {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  background-color: rgba(0, 0, 0, 0.7) !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  z-index: 99999 !important;
+}
+
+.payment-loading-popup {
+  background: white !important;
+  padding: 40px !important;
+  border-radius: 12px !important;
+  text-align: center !important;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3) !important;
+  min-width: 300px !important;
+  z-index: 100000 !important;
+  position: relative !important;
+  
+  .spinner-border {
+    width: 3rem !important;
+    height: 3rem !important;
+    border-width: 0.3em !important;
+  }
+  
+  h4 {
+    margin-top: 20px !important;
+    margin-bottom: 10px !important;
+    font-weight: 600 !important;
+    color: #333 !important;
+  }
+  
+  p {
+    color: #666 !important;
+    margin-bottom: 0 !important;
+    font-size: 14px !important;
+  }
+}

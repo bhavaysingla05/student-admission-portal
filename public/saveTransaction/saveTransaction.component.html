@@ -1,0 +1,805 @@
+<div class="kt-portlet"
+	[ngClass]="{ 'kt-portlet--body-progress kt-portlet--body-progress-overlay' : viewLoading }">
+	<div class="kt-portlet__head kt-portlet__head__custom">
+		<div class="kt-portlet__head-label">
+      <h3 class="kt-portlet__head-title">Payment Details for selected Stage</h3>
+    </div>
+    <div class="kt-portlet__toolbar">
+        <mat-form-field class="p10"  (click)="picker.open()">
+          <input matInput [matDatepicker]="picker" [ngModelOptions]="{standalone: true}" 
+          [(ngModel)]="myDate" placeholder="Choose a date" [disabled]="disableBackDateAdmission">
+          <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+          <mat-datepicker #picker></mat-datepicker>
+        </mat-form-field>
+		</div>
+  </div>
+	<form class="kt-form"  [formGroup]="validationForm"  autocomplete="off"  >
+		<div class="kt-form kt-portlet__body">
+			<div class="row">
+			    <div class="col-md-3" >
+              {{displayNames.course}} : {{studentData.course}}
+          </div>
+          <div class="col-md-3" >
+              {{displayNames.stream}} : {{studentData.stream}}
+          </div>
+          <div class="col-md-3" >
+          Application Number : {{studentData.applicationNumber}}
+          </div>
+          <div class="col-md-3" >
+          Paying Amount : {{totalPaybleAmount}}
+          </div>
+          <!-- <div class="col-md-3 ">
+            <mat-form-field>
+              <mat-select placeholder="Select Payment Mode" [(ngModel)]="paymentDetails.paymentMode" 
+                  formControlName="controlPaymentMode">
+                  <mat-option *ngFor="let mode of paymentModes; let index = index;"
+                    [value]="mode" (onSelectionChange)="selectPaymentMode(mode, $event)" >
+                  {{ mode.toUpperCase() }}
+                  </mat-option>
+              </mat-select>
+              <mat-error *ngIf="isControlHasError('controlPaymentMode','required')">
+                  <strong>Field required</strong>
+              </mat-error>
+          </mat-form-field>
+          </div>
+          <div  [hidden]="cash" class="col-md-3">
+            <mat-form-field  (click)="picke.open()">
+              <input matInput [matDatepicker]="picke" [ngModelOptions]="{standalone: true}" 
+              [(ngModel)]="paymentDetails.date" placeholder="Choose a date">
+              <mat-datepicker-toggle matSuffix [for]="picke"></mat-datepicker-toggle>
+              <mat-datepicker #picke></mat-datepicker>
+            </mat-form-field>
+          </div>
+          <div [hidden]="!cheque" class="col-md-3">
+            <mat-form-field class="example">
+              <input matInput  [(ngModel)]="paymentDetails.refId" [ngModelOptions]="{standalone: true}"
+                placeholder="Enter Cheque Number" value="">
+            </mat-form-field>
+          </div>
+          <div [hidden]="!demamdDraft" class="col-md-3">
+            <mat-form-field class="example">
+              <input matInput  [(ngModel)]="paymentDetails.refId" [ngModelOptions]="{standalone: true}"
+                placeholder="Enter Demand Draft Number" value="">
+            </mat-form-field>
+          </div>
+          <div [hidden]="cash" class="col-md-3">
+            <mat-form-field class="example">
+              <input matInput  [(ngModel)]="paymentDetails.bankName" [ngModelOptions]="{standalone: true}"
+                placeholder="Enter Bank Name" value="">
+            </mat-form-field>
+          </div>
+          <div [hidden]="!cash" class="col-md-3">
+            <mat-form-field class="example">
+              <input matInput  [(ngModel)]="paymentDetails.refId" [ngModelOptions]="{standalone: true}"
+                placeholder="Enter Reference ID" value="">
+            </mat-form-field>
+          </div>
+          <div class="col-md-3">
+            <mat-form-field class="example-full-width">
+              <textarea matInput placeholder="Remark" [ngModelOptions]="{standalone: true}"
+                [(ngModel)]="paymentDetails.remark" ></textarea>
+            </mat-form-field>
+          </div> -->
+            <div class="col-md-3">
+                <mat-form-field class="example">
+                  <mat-select placeholder="Select Payment Mode" formControlName="controlPaymentMode"  [(ngModel)]="paymentDetails.paymentMode">
+                  <mat-option *ngFor="let item of paymentModes; let index = index; " 
+                  (onSelectionChange)="selectPaymentMode(item, $event)" 
+                  [value]="item">
+                      {{item}}
+                  </mat-option>
+                  </mat-select>
+                  <mat-error *ngIf="isControlHasError('controlPaymentMode','required')">
+                    <strong>Field required</strong>
+                </mat-error>
+                </mat-form-field>
+            </div>
+            <div  class="col-md-3">
+            <mat-form-field class="example">
+                <mat-select placeholder="Select {{displayNames.instituteBank}}" [ngModelOptions]="{standalone: true}"  [disabled]="paymentDetails.paymentMode=='Cash' "[(ngModel)]="paymentDetails.bankAccount">
+                <mat-option *ngFor="let item of bankAccountList; let index = index; " [value]="item">
+                    {{item}}
+                </mat-option>
+                </mat-select>
+            </mat-form-field>
+            </div>
+            <div  class="col-md-3" style="display: flex;flex-direction: column;">
+              <div>
+              <mat-form-field class="example">
+                <input matInput  [(ngModel)]="paymentDetails.refId"  [ngModelOptions]="{standalone: true}"   [placeholder]=" 'Enter '+ paymentDetails.paymentMode +' Reference Number'" value="" maxlength="100">
+              </mat-form-field>
+            </div>
+            <div>
+              <mat-hint align="end" style="color: #ff33cc;" *ngIf="paymentDetails.refId?.length>0">Maximum allowed characters: {{ paymentDetails.refId?.length || 0 }}/100</mat-hint>
+            </div>
+            </div> 
+            <div [hidden]="paymentDetails.paymentMode == 'Cash'" class="col-md-3" >
+            <mat-form-field (click)="picke.open()"  >
+                <input matInput [matDatepicker]="picke" [ngModelOptions]="{standalone: true}" 
+                [(ngModel)]="paymentDetails.date" placeholder="Choose a date">
+                <mat-datepicker-toggle matSuffix [for]="picke"></mat-datepicker-toggle>
+                <mat-datepicker #picke></mat-datepicker>
+            </mat-form-field>
+            </div>
+            <div [hidden]="paymentDetails.paymentMode == 'Cash'" class="col-md-3">
+            <mat-form-field class="example" >
+                <input matInput  [ngModelOptions]="{standalone: true}" [(ngModel)]="paymentDetails.bankName" placeholder="Enter Customer Bank Name" value="">
+            </mat-form-field>
+            </div>
+            <div class="col-md-6 ">
+            <mat-form-field class="example-full-width">
+                <textarea matInput placeholder="Remark" [ngModelOptions]="{standalone: true}"  [(ngModel)]="paymentDetails.remark" ></textarea>
+            </mat-form-field>
+            </div>
+        </div>
+		</div>
+
+
+    <div  style="display: none;">
+      <button id="failedFilter" style="color: var(--filter-color);" type="button" mat-raised-button mat-dialog-close (click)="openTemplateFilter(failedTemplate)"  cdkFocusInitial matTooltip="Toggle Filters">
+          <i  class="fas fa-sort-amount-up "></i>&nbsp;
+          Filter
+        </button>&nbsp;
+      </div>
+    
+    <div  style="display: none;">
+      <button id="thankuFilter" style="color: var(--filter-color);" type="button" mat-raised-button mat-dialog-close (click)="openTemplateFilter(thankyouTemplate)"  cdkFocusInitial matTooltip="Toggle Filters">
+          <i  class="fas fa-sort-amount-up "></i>&nbsp;
+          Filter
+        </button>&nbsp;
+      </div>
+    
+
+
+
+
+        <div class="card-deck row" id="chargeCategory" style="justify-content: space-between;" ><!---->
+
+          <div class="card-deck col-md-8" id="chargeCategory"><!---->
+            <div class="card" style="margin:20px;" [hidden]="displayChargesCategory && allPaymentModes.length<1" *ngFor="let item of allPaymentModes">
+              <!-- <h3 style="text-align: center; font-size: large; color:#6b91fa">{{item.gatewayName.toUpperCase()}}</h3> -->
+              <img src="../../../../../../../assets/images/Blue.png" class="gateWayImg" alt="">
+              <div style="display:flex;flex-direction:column;flex-wrap: wrap; max-width: 800px;">
+                <div class="card-body first" *ngFor="let value of item.paymentMode">
+                  <div class="form-check"> 
+                    <input type="radio" *ngIf="value.paymentModeName == 'upi'" name="optradio" id="ratioButtonupi" class="form-check-input dot"  (change)="checkModeSelectedPaytm($event,value,item)"> 
+                    <input type="radio" *ngIf="value.paymentModeName != 'upi'" name="optradio" id="ratioButton" class="form-check-input dot"  (change)="checkModeSelectedPaytm($event,value,item)">  
+                  </div>
+                  <div *ngIf="value.paymentModeName == 'upi'">
+                    <div>
+                  <span style="padding-left: 40px;font-weight: bold ;font-size:larger;">{{value.paymentModeName.toUpperCase()}} </span>
+                  </div>
+                  <div style="padding-left: 37px;">
+                    <ngb-carousel >
+                      <ng-template ngbSlide *ngFor="let file of images" >
+                        <div class="wrapper">
+                          <img  [src]="file" class="mediaCardImage card-img-top" style="width: 40px; padding-left: 2px; height: 60px;" alt="">
+                        </div>
+                 
+                   
+                      </ng-template>
+              </ngb-carousel>
+                    <!-- <img src="../../../../../../../assets/images/phonePay.png" style="width: 30px; height: 30px;" alt="">
+                    <img src="../../../../../../../assets/images/UPI_logo.png" style="width: 40px; padding-left: 2px;" alt="">
+                    <img src="../../../../../../../assets/images/google-pay-gpay-logo.png" style="width: 40px; padding-left: 2px;" alt="">
+                    <img src="../../../../../../../assets/images/payTM.png" style="width: 40px; padding-left: 2px;" alt=""> -->
+                  </div>   
+                </div>
+                  <span *ngIf="value.paymentModeName != 'upi'" class="card-title" style="padding-left: 40px;font-weight: bold ;font-size:larger;">{{value.paymentModeName.toUpperCase() == 'CARD' ? 'DEBIT CARD' : value.paymentModeName.toUpperCase() }}</span>
+                </div>
+                
+              </div>
+            <!-- <div class="card-footer">
+              <button  (click)="applyCharges()" style="text-align: center;" class="btn btn-success font-weight-bold px-6 py-3">Go</button>
+            </div> -->
+          </div>
+            <div class="card" [hidden]="displayChargesCategory && allPaytmModes.length<1" *ngFor="let item of allPaytmModes">
+                <!-- <h3 style="text-align: center; font-size: large; color:#6b91fa">{{item.gatewayName.toUpperCase()}}</h3> -->
+              <img src="../../../../../../../assets/images/payTM.png" class="gateWayImg" alt="">
+                <div style="display:flex;flex-direction:column;flex-wrap: wrap; max-width: 800px;">
+                  <div class="card-body first" *ngFor="let value of item.paymentMode">
+                    <div class="form-check"> 
+                      <input type="radio" *ngIf="value.paymentModeName == 'UPI'" name="optradio" id="ratioButtonUPI" class="form-check-input dot"  (change)="checkModeSelectedPaytm($event,value,item)"> 
+                      <input type="radio" *ngIf="value.paymentModeName != 'UPI'" name="optradio" id="ratioButton" class="form-check-input dot"  (change)="checkModeSelectedPaytm($event,value,item)"> 
+                    </div>
+                    <div *ngIf="value.paymentModeName == 'UPI'">
+                      <div>
+                    <span style="padding-left: 40px;font-weight: bold ;font-size:larger;">UPI </span>
+                    </div>
+                    <div style="padding-left: 37px;">
+                      <ngb-carousel >
+                        <ng-template ngbSlide *ngFor="let file of images" >
+                          <div class="wrapper">
+                            <img  [src]="file" class="mediaCardImage card-img-top" style="width: 40px; padding-left: 2px; height: 60px;" alt="">
+                          </div>
+                   
+                     
+                        </ng-template>
+                </ngb-carousel>
+                      <!-- <img src="../../../../../../../assets/images/phonePay.png" style="width: 30px; height: 30px;" alt="">
+                      <img src="../../../../../../../assets/images/UPI_logo.png" style="width: 40px; padding-left: 2px;" alt="">
+                      <img src="../../../../../../../assets/images/google-pay-gpay-logo.png" style="width: 40px; padding-left: 2px;" alt="">
+                      <img src="../../../../../../../assets/images/payTM.png" style="width: 40px; padding-left: 2px;" alt=""> -->
+                    </div>   
+                  </div>
+                    <span *ngIf="value.paymentModeName != 'UPI'" class="card-title" style="padding-left: 40px;font-weight: bold ;font-size:larger;"> 
+                      <span *ngIf="value.paymentModeName.toUpperCase() == 'DC'">Debit Card</span>
+                       <span *ngIf="value.paymentModeName.toUpperCase() == 'NB'"> Net Banking </span></span>
+                  </div>
+                  
+                </div>
+              <!-- <div class="card-footer">
+                <button  (click)="applyCharges()" style="text-align: center;" class="btn btn-success font-weight-bold px-6 py-3">Go</button>
+              </div> -->
+            </div>
+            <div class="card" [hidden]="displayChargesCategory && allEaseBuzzPaymentModes.length<1" *ngFor="let item of allEaseBuzzPaymentModes">
+              <!-- <h3 style="text-align: center; font-size: large; color:#6b91fa">{{item.gatewayName.toUpperCase()}}</h3> -->
+            <img src="../../../../../../../assets/images/Easebuzz_Logo.jpg" class="gateWayImg" alt="">
+              <div style="display:flex;flex-direction:column;flex-wrap: wrap; max-width: 800px;">
+                <div class="card-body first" *ngFor="let value of item.paymentMode">
+                  <div class="form-check">
+                    <input type="radio" *ngIf="value.paymentModeName == 'UPI'" name="optradio" id="ratioButtonEaseBuzz" class="form-check-input dot"  (change)="checkModeSelectedEaseBuzz($event,value,item)">
+                    <input type="radio" *ngIf="value.paymentModeName != 'UPI'" name="optradio" id="ratioButton" class="form-check-input dot"  (change)="checkModeSelectedEaseBuzz($event,value,item)">
+                  </div>
+                  <div *ngIf="value.paymentModeName == 'UPI'">
+                    <div>
+                  <span style="padding-left: 40px;font-weight: bold ;font-size:larger;">UPI </span>
+                  </div>
+                  <div style="padding-left: 37px;">
+                    <ngb-carousel >
+                      <ng-template ngbSlide *ngFor="let file of images" >
+                        <div class="wrapper">
+                          <img  [src]="file" class="mediaCardImage card-img-top" style="width: 40px; padding-left: 2px; height: 60px;" alt="">
+                        </div>
+      
+      
+                      </ng-template>
+              </ngb-carousel>
+                    <!-- <img src="../../../../../../../assets/images/phonePay.png" style="width: 30px; height: 30px;" alt="">
+                    <img src="../../../../../../../assets/images/UPI_logo.png" style="width: 40px; padding-left: 2px;" alt="">
+                    <img src="../../../../../../../assets/images/google-pay-gpay-logo.png" style="width: 40px; padding-left: 2px;" alt="">
+                    <img src="../../../../../../../assets/images/payTM.png" style="width: 40px; padding-left: 2px;" alt=""> -->
+                  </div>
+                </div>
+                  <span *ngIf="value.paymentModeName != 'UPI'" class="card-title" style="padding-left: 40px;font-weight: bold ;font-size:larger;">
+                    <span *ngIf="value.paymentModeName.toUpperCase() == 'DC'">Debit Card</span>
+                    <span *ngIf="value.paymentModeName.toUpperCase() == 'CC'">Credit Card</span>
+                     <span *ngIf="value.paymentModeName.toUpperCase() == 'NB'"> Net Banking </span></span>
+                </div>
+      
+              </div>
+            <!-- <div class="card-footer">
+              <button  (click)="applyCharges()" style="text-align: center;" class="btn btn-success font-weight-bold px-6 py-3">Go</button>
+            </div> -->
+          </div>
+          <div class="card" [hidden]="displayChargesCategory && allccAvenuePaymentModes.length<1" *ngFor="let item of allccAvenuePaymentModes">
+            <!-- <h3 style="text-align: center; font-size: large; color:#6b91fa">{{item.gatewayName.toUpperCase()}}</h3> -->
+          <img src="../../../../../../../assets/images/ccavenue-logo.png" class="gateWayImg" alt="">
+            <div style="display:flex;flex-direction:column;flex-wrap: wrap; max-width: 800px;">
+              <div class="card-body first" *ngFor="let value of item.paymentMode">
+                <div class="form-check">
+                  <input type="radio" *ngIf="value.paymentModeName == 'UPI'" name="optradio" id="ratioButtonAvenue" class="form-check-input dot"  (change)="checkModeSelectedccAvenue($event,value,item)">
+                  <input type="radio" *ngIf="value.paymentModeName != 'UPI'" name="optradio" id="ratioButton" class="form-check-input dot"  (change)="checkModeSelectedccAvenue($event,value,item)">
+                </div>
+                <div *ngIf="value.paymentModeName == 'UPI'">
+                  <div>
+                <span style="padding-left: 40px;font-weight: bold ;font-size:larger;">UPI </span>
+                </div>
+                <div style="padding-left: 37px;">
+                  <ngb-carousel >
+                    <ng-template ngbSlide *ngFor="let file of images" >
+                      <div class="wrapper">
+                        <img  [src]="file" class="mediaCardImage card-img-top" style="width: 40px; padding-left: 2px; height: 60px;" alt="">
+                      </div>
+      
+      
+                    </ng-template>
+            </ngb-carousel>
+                  <!-- <img src="../../../../../../../assets/images/phonePay.png" style="width: 30px; height: 30px;" alt="">
+                  <img src="../../../../../../../assets/images/UPI_logo.png" style="width: 40px; padding-left: 2px;" alt="">
+                  <img src="../../../../../../../assets/images/google-pay-gpay-logo.png" style="width: 40px; padding-left: 2px;" alt="">
+                  <img src="../../../../../../../assets/images/payTM.png" style="width: 40px; padding-left: 2px;" alt=""> -->
+                </div>
+              </div>
+                <span *ngIf="value.paymentModeName != 'UPI'" class="card-title" style="padding-left: 40px;font-weight: bold ;font-size:larger;">
+                  <span *ngIf="value.paymentModeName.toUpperCase() == 'DC'">Debit Card</span>
+                  <span *ngIf="value.paymentModeName.toUpperCase() == 'CC'">Credit Card</span>
+                   <span *ngIf="value.paymentModeName.toUpperCase() == 'NB'"> Net Banking </span>
+                   <span *ngIf="value.paymentModeName == 'all'"> All </span>
+                  </span>
+              </div>
+      
+            </div>
+          <!-- <div class="card-footer">
+            <button  (click)="applyCharges()" style="text-align: center;" class="btn btn-success font-weight-bold px-6 py-3">Go</button>
+          </div> -->
+        </div>
+        <div class="card" [hidden]="displayChargesCategory && allEazyPayPaymentModes.length<1" *ngFor="let item of allEazyPayPaymentModes">
+          <!-- <h3 style="text-align: center; font-size: large; color:#6b91fa">{{item.gatewayName.toUpperCase()}}</h3> -->
+        <img src="../../../../../../../assets/images/icici-logo.png" class="gateWayImg" alt="">
+          <div style="display:flex;flex-direction:column;flex-wrap: wrap; max-width: 800px;">
+            <div class="card-body first" *ngFor="let value of item.paymentMode">
+              <div class="form-check">
+                <input type="radio" *ngIf="value.paymentModeName == 'UPI'" name="optradio" id="ratioButtonEazyPay" class="form-check-input dot"  (change)="checkModeSelectedEazyPay($event,value,item)">
+                <input type="radio" *ngIf="value.paymentModeName != 'UPI'" name="optradio" id="ratioButton" class="form-check-input dot"  (change)="checkModeSelectedEazyPay($event,value,item)">
+              </div>
+              <div *ngIf="value.paymentModeName == 'UPI'">
+                <div>
+              <span style="padding-left: 40px;font-weight: bold ;font-size:larger;">UPI </span>
+              </div>
+              <div style="padding-left: 37px;">
+                <ngb-carousel >
+                  <ng-template ngbSlide *ngFor="let file of images" >
+                    <div class="wrapper">
+                      <img  [src]="file" class="mediaCardImage card-img-top" style="width: 40px; padding-left: 2px; height: 60px;" alt="">
+                    </div>
+    
+    
+                  </ng-template>
+          </ngb-carousel>
+                <!-- <img src="../../../../../../../assets/images/phonePay.png" style="width: 30px; height: 30px;" alt="">
+                <img src="../../../../../../../assets/images/UPI_logo.png" style="width: 40px; padding-left: 2px;" alt="">
+                <img src="../../../../../../../assets/images/google-pay-gpay-logo.png" style="width: 40px; padding-left: 2px;" alt="">
+                <img src="../../../../../../../assets/images/payTM.png" style="width: 40px; padding-left: 2px;" alt=""> -->
+              </div>
+            </div>
+              <span *ngIf="value.paymentModeName != 'UPI'" class="card-title" style="padding-left: 40px;font-weight: bold ;font-size:larger;">
+                <span *ngIf="value.paymentModeName.toUpperCase() == 'DC'">Debit Card</span>
+                <span *ngIf="value.paymentModeName.toUpperCase() == 'CC'">Credit Card</span>
+                 <span *ngIf="value.paymentModeName.toUpperCase() == 'NB'"> Net Banking </span>
+                 <span *ngIf="value.paymentModeName == 'all'"> All </span>
+                </span>
+            </div>
+    
+          </div>
+        <!-- <div class="card-footer">
+          <button  (click)="applyCharges()" style="text-align: center;" class="btn btn-success font-weight-bold px-6 py-3">Go</button>
+        </div> -->
+      </div>
+          <div class="card" [hidden]="displayChargesCategory && allEdvironPaymentModes.length<1" *ngFor="let item of allEdvironPaymentModes">
+    <!-- <h3 style="text-align: center; font-size: large; color:#6b91fa">{{item.gatewayName.toUpperCase()}}</h3> -->
+  <img src="../../../../../../../assets/images/edviron_logo.png" class="gateWayImg" alt="">
+    <div style="display:flex;flex-direction:column;flex-wrap: wrap; max-width: 800px;">
+      <div class="card-body first" *ngFor="let value of item.paymentMode">
+        <div class="form-check">
+          <input type="radio" *ngIf="value.paymentModeName == 'UPI'" name="optradio" id="ratioButtonEazyPay" class="form-check-input dot"  (change)="checkModeSelectedEdviron($event,value,item)">
+          <input type="radio" *ngIf="value.paymentModeName != 'UPI'" name="optradio" id="ratioButton" class="form-check-input dot"  (change)="checkModeSelectedEdviron($event,value,item)">
+        </div>
+        <div *ngIf="value.paymentModeName == 'UPI'">
+          <div>
+        <span style="padding-left: 40px;font-weight: bold ;font-size:larger;">UPI </span>
+        </div>
+        <div style="padding-left: 37px;">
+          <ngb-carousel >
+            <ng-template ngbSlide *ngFor="let file of images" >
+              <div class="wrapper">
+                <img  [src]="file" class="mediaCardImage card-img-top" style="width: 40px; padding-left: 2px; height: 60px;" alt="">
+              </div>
+
+
+            </ng-template>
+    </ngb-carousel>
+          <!-- <img src="../../../../../../../assets/images/phonePay.png" style="width: 30px; height: 30px;" alt="">
+          <img src="../../../../../../../assets/images/UPI_logo.png" style="width: 40px; padding-left: 2px;" alt="">
+          <img src="../../../../../../../assets/images/google-pay-gpay-logo.png" style="width: 40px; padding-left: 2px;" alt="">
+          <img src="../../../../../../../assets/images/payTM.png" style="width: 40px; padding-left: 2px;" alt=""> -->
+        </div>
+      </div>
+        <span *ngIf="value.paymentModeName != 'UPI'" class="card-title" style="padding-left: 40px;font-weight: bold ;font-size:larger;">
+          <span *ngIf="value.paymentModeName.toUpperCase() == 'DC'">Debit Card</span>
+          <span *ngIf="value.paymentModeName.toUpperCase() == 'CC'">Credit Card</span>
+           <span *ngIf="value.paymentModeName.toUpperCase() == 'NB'"> Net Banking </span>
+           <span *ngIf="value.paymentModeName == 'all'"> All </span>
+          </span>
+      </div>
+
+    </div>
+  <!-- <div class="card-footer">
+    <button  (click)="applyCharges()" style="text-align: center;" class="btn btn-success font-weight-bold px-6 py-3">Go</button>
+  </div> -->
+</div>
+<div class="card" [hidden]="displayChargesCategory && allWorldLineModes.length<1" *ngFor="let item of allWorldLineModes">
+  <!-- <h3 style="text-align: center; font-size: large; color:#6b91fa">{{item.gatewayName.toUpperCase()}}</h3> -->
+<img src="../../../../../../../assets/images/worldlineLogo.png" class="gateWayImg" alt="">
+  <div style="display:flex;flex-direction:column;flex-wrap: wrap; max-width: 800px;">
+    <div class="card-body first" *ngFor="let value of item.paymentMode">
+      <div class="form-check">
+        <input type="radio" *ngIf="value.paymentModeName == 'UPI'" name="optradio" id="radioButtonWorldline" class="form-check-input dot" (click)="$event.stopPropagation()"  (change)="checkModeSelectedWorldline($event,value,item)">
+        <input type="radio" *ngIf="value.paymentModeName != 'UPI'" name="optradio" id="radioButtonWorldline" class="form-check-input dot" (click)="$event.stopPropagation()"  (change)="checkModeSelectedWorldline($event,value,item)">
+      </div>
+      <div *ngIf="value.paymentModeName == 'UPI'">
+        <div>
+      <span style="padding-left: 40px;font-weight: bold ;font-size:larger;">UPI </span>
+      </div>
+      <div style="padding-left: 37px;">
+        <ngb-carousel >
+          <ng-template ngbSlide *ngFor="let file of images" >
+            <div class="wrapper">
+              <img  [src]="file" class="mediaCardImage card-img-top" style="width: 40px; padding-left: 2px; height: 60px;" alt="">
+            </div>
+
+
+          </ng-template>
+  </ngb-carousel>
+        <!-- <img src="../../../../../../../assets/images/phonePay.png" style="width: 30px; height: 30px;" alt="">
+        <img src="../../../../../../../assets/images/UPI_logo.png" style="width: 40px; padding-left: 2px;" alt="">
+        <img src="../../../../../../../assets/images/google-pay-gpay-logo.png" style="width: 40px; padding-left: 2px;" alt="">
+        <img src="../../../../../../../assets/images/payTM.png" style="width: 40px; padding-left: 2px;" alt=""> -->
+      </div>
+    </div>
+      <span *ngIf="value.paymentModeName != 'UPI'" class="card-title" style="padding-left: 40px;font-weight: bold ;font-size:larger;">
+        <span *ngIf="value.paymentModeName.toUpperCase() == 'DC'">Debit Card</span>
+        <span *ngIf="value.paymentModeName.toUpperCase() == 'CC'">Credit Card</span>
+         <span *ngIf="value.paymentModeName.toUpperCase() == 'NB'"> Net Banking </span>
+         <span *ngIf="value.paymentModeName == 'all'"> All </span>
+        </span>
+    </div>
+
+  </div>
+<!-- <div class="card-footer">
+  <button  (click)="applyCharges()" style="text-align: center;" class="btn btn-success font-weight-bold px-6 py-3">Go</button>
+</div> -->
+</div>
+<div class="card" [hidden]="displayChargesCategory && allCashfreeModes.length<1" *ngFor="let item of allCashfreeModes">
+  <!-- <h3 style="text-align: center; font-size: large; color:#6b91fa">{{item.gatewayName.toUpperCase()}}</h3> -->
+<img src="../../../../../../../assets/images/Cashfree_Logo.jpg" class="gateWayImg" alt="">
+  <div style="display:flex;flex-direction:column;flex-wrap: wrap; max-width: 800px;">
+    <div class="card-body first" *ngFor="let value of item.paymentMode">
+      <div class="form-check">
+        <input type="radio" *ngIf="value.paymentModeName == 'UPI'" name="optradio" id="ratioButtonEazyPay" class="form-check-input dot"  (change)="checkModeSelectedCashfree($event,value,item)">
+        <input type="radio" *ngIf="value.paymentModeName != 'UPI'" name="optradio" id="ratioButton" class="form-check-input dot"  (change)="checkModeSelectedCashfree($event,value,item)">
+      </div>
+      <div *ngIf="value.paymentModeName == 'UPI'">
+        <div>
+      <span style="padding-left: 40px;font-weight: bold ;font-size:larger;">UPI </span>
+      </div>
+      <div style="padding-left: 37px;">
+        <ngb-carousel >
+          <ng-template ngbSlide *ngFor="let file of images" >
+            <div class="wrapper">
+              <img  [src]="file" class="mediaCardImage card-img-top" style="width: 40px; padding-left: 2px; height: 60px;" alt="">
+            </div>
+
+
+          </ng-template>
+  </ngb-carousel>
+        <!-- <img src="../../../../../../../assets/images/phonePay.png" style="width: 30px; height: 30px;" alt="">
+        <img src="../../../../../../../assets/images/UPI_logo.png" style="width: 40px; padding-left: 2px;" alt="">
+        <img src="../../../../../../../assets/images/google-pay-gpay-logo.png" style="width: 40px; padding-left: 2px;" alt="">
+        <img src="../../../../../../../assets/images/payTM.png" style="width: 40px; padding-left: 2px;" alt=""> -->
+      </div>
+    </div>
+      <span *ngIf="value.paymentModeName != 'UPI'" class="card-title" style="padding-left: 40px;font-weight: bold ;font-size:larger;">
+        <span *ngIf="value.paymentModeName.toUpperCase() == 'DC'">Debit Card</span>
+        <span *ngIf="value.paymentModeName.toUpperCase() == 'CC'">Credit Card</span>
+         <span *ngIf="value.paymentModeName.toUpperCase() == 'NB'"> Net Banking </span>
+         <span *ngIf="value.paymentModeName == 'all'"> All </span>
+        </span>
+    </div>
+
+  </div>
+<!-- <div class="card-footer">
+  <button  (click)="applyCharges()" style="text-align: center;" class="btn btn-success font-weight-bold px-6 py-3">Go</button>
+</div> -->
+</div>
+<div class="card" [hidden]="displayChargesCategory && allEazyPayPOSPaymentModes.length<1" *ngFor="let item of allEazyPayPOSPaymentModes">
+  <!-- <h3 style="text-align: center; font-size: large; color:#6b91fa">{{item.gatewayName.toUpperCase()}}</h3> -->
+  <img src="../../../../../../../assets/images/icici-logo.png" class="gateWayImg" alt=""><span>&nbsp; POS</span>
+  <div style="display:flex;flex-direction:column;flex-wrap: wrap; max-width: 800px;">
+    <div class="card-body first" *ngFor="let value of item.paymentMode">
+    <div class="form-check">
+      <input type="radio" *ngIf="value.paymentModeName == 'upi'" name="optradio" id="ratioButtonEazyPayPOS" class="form-check-input dot"  (change)="checkModeSelectedEazyPayPos($event,value,item)">
+      <input type="radio" *ngIf="value.paymentModeName != 'upi'" name="optradio" id="ratioButtonEazyPayPOS" class="form-check-input dot"  (change)="checkModeSelectedEazyPayPos($event,value,item)">
+    </div>
+    <div *ngIf="value.paymentModeName == 'upi'">
+      <div>
+    <span style="padding-left: 40px;font-weight: bold ;font-size:larger;">UPI </span>
+    </div>
+    <div style="padding-left: 37px;">
+      <ngb-carousel >
+      <ng-template ngbSlide *ngFor="let file of images" >
+        <div class="wrapper">
+        <img  [src]="file" class="mediaCardImage card-img-top" style="width: 40px; padding-left: 2px; height: 60px;" alt="">
+        </div>
+  
+  
+      </ng-template>
+  </ngb-carousel>
+    </div>
+    </div>
+    <span *ngIf="value.paymentModeName != 'upi'" class="card-title" style="padding-left: 40px;font-weight: bold ;font-size:larger;">
+      <span *ngIf="value.paymentModeName.toUpperCase() == 'DC'">Debit Card</span>
+      <span *ngIf="value.paymentModeName.toUpperCase() == 'CC'">Credit Card</span>
+       <span *ngIf="value.paymentModeName.toUpperCase() == 'NB'"> Net Banking </span>
+       <span *ngIf="value.paymentModeName == 'card'"> Card </span>
+       <span *ngIf="value.paymentModeName == 'all'"> All </span>
+      </span>
+    </div>
+  
+  </div>
+
+  </div>
+            <!-- <div class="card-deck" [hidden]="showFinalData">
+              <div class="card row">
+                <div class="card-body first">
+                  <h5 class="card-title" style="padding-left: 40px; font-size: large;">Fee Amount: ₹{{fineAmountWithCharges.amount}}</h5>
+                  <h5 class="card-title" style="padding-left: 40px; font-size: large;">Bank Charges: ₹{{fineAmountWithCharges.charges}}</h5>
+                  <h5 class="card-title" style="padding-left: 40px; font-size: large;">GST: ₹{{fineAmountWithCharges.tax}}</h5>
+                  <h5 class="card-title" style="padding-left: 40px; font-size: large;">Total Amount to be paid: ₹{{fineAmountWithCharges.finalAmount}}</h5>
+                  <p class="card-text"></p>
+                 
+                </div>
+                <div class="card-footer " style="text-align: end;">
+                  <p style="text-align: center !important; color:rgb(20, 241, 20);" [hidden]="!messageTrue">{{fineAmountWithCharges.message}}</p>
+                  <button  (click)="payAmount()" style="text-align: center;" class="btn buttonTheme btn-primary font-weight-bolder px-6 py-3 col-md-12" style="font-size:18px;"> <span [hidden]="messageTrue">Pay ₹{{fineAmountWithCharges.finalAmount}}</span>  <span [hidden]="!messageTrue">Pay ₹{{fineAmountWithCharges.amount}}</span></button>
+                  <div>
+                </div>
+                  <div>
+                    <button  (click)="backStage()" style="text-align: center;" class="btn btn-success font-weight-bold px-6 py-3">Go to back Stage</button>
+                  </div>
+                </div>
+          
+              </div>
+              </div> -->
+            </div>
+          <div class="card-deck col-sm-12 col-md-3" [hidden]="showFinalData" style="margin:20px;">
+            <div class="card row">
+              <div class="card-body first">
+                <h5 class="card-title" style="padding-left: 40px; font-size: large;">Fee Amount: ₹{{fineAmountWithCharges.amount}}</h5>
+                <h5 class="card-title" style="padding-left: 40px; font-size: large;" *ngIf="fineAmountWithCharges?.charges > 0" >Bank Charges: ₹{{fineAmountWithCharges.charges}}</h5>
+                <h5 class="card-title" style="padding-left: 40px; font-size: large;" *ngIf="fineAmountWithCharges?.tax > 0" >GST: ₹{{fineAmountWithCharges.tax}}</h5>
+                <h5 class="card-title" style="padding-left: 40px; font-size: large;" *ngIf="fineAmountWithCharges?.finalAmount > 0" >Total Amount to be paid: ₹{{fineAmountWithCharges.finalAmount}}</h5>
+                <p class="card-text"></p>
+               
+              </div>
+              <div class="card-footer " style="text-align: end;">
+                <p style="text-align: center !important; color:rgb(20, 241, 20);" [hidden]="!messageTrue">{{fineAmountWithCharges.message}}</p>
+                <button  (click)="payAmount()" style="text-align: center;" class="btn buttonTheme btn-primary font-weight-bolder px-6 py-3 col-md-12" style="font-size:18px;"> <span [hidden]="messageTrue">Pay ₹{{fineAmountWithCharges.finalAmount}}</span>  <span [hidden]="!messageTrue">Pay ₹{{fineAmountWithCharges.amount}}</span></button>
+                <div>
+              </div>
+                <!-- <div>
+                  <button  (click)="backStage()" style="text-align: center;" class="btn btn-success font-weight-bold px-6 py-3">Go to back Stage</button>
+                </div> -->
+              </div>
+        
+            </div>
+            </div>
+          </div>
+      
+		<div class="kt-portlet__foot kt-portlet__no-border kt-portlet__foot--fit">
+			<div class="kt-form__actions kt-form__actions--solid">
+		
+          <div class="col-md-12 row">
+            <div class="col-md-4">
+              <button [hidden]="!checkPermission('collectFeeOnline')"  class="btn buttonTheme btn-primary btn-elevate kt-login__btn-primary" 
+              [ngClass]="{'kt-spinner kt-spinner--right kt-spinner--md kt-spinner--light': loading}" 
+                type="button" [disabled]="checkClicked" (click)="confirmToPayOnline()"> Collect Online Fee </button>&nbsp;
+            </div>
+					<div class="col-md-8 textEnd">
+						<button type="button" mat-raised-button mat-dialog-close (click)="foo(data.title)"  cdkFocusInitial matTooltip="Cancel changes">
+							Cancel
+						</button>&nbsp;
+            <button type="button" class="buttonTheme" mat-raised-button color="primary" (click)="onSubmit(data.title)" [disabled]="viewLoading" matTooltip="Save changes"
+            [ngClass]="{'kt-spinner kt-spinner--right kt-spinner--md kt-spinner--light': viewLoading}">
+							Save
+						</button>
+					</div>
+        </div>
+			
+			</div>
+		</div>
+	</form>
+</div>
+
+
+
+
+
+
+<ng-template #failedTemplate>
+  <div  class="hiddenPrint card">
+    <div class=" card-body" style="padding-left: 3rem; text-align: center;">
+      <span class="fwBold">
+       </span>
+       <br>
+    <h1 class="display-3">Payment Failed!</h1>
+    <br>
+    <p class="lead"><strong>Your Payment is not successful</strong> for Rs {{total.payingNow}}</p>
+    <p class="lead">Please try again!!!.Or having any trouble you can contact us from below.</p>
+    <p class="lead">
+    <!-- <a class="btn btn-success font-weight-bold px-6 py-3" role="button">Download Receipt</a> -->
+  </p>
+    <br><br><br><br>
+    <hr>
+    <!-- <p class="lead">
+      <a
+      class="btn  font-weight-bold cursor-pointer"
+      style="background-color: #C9F7F5; color: #1BC5BD;"
+          (click)="redirectToDashboard()"
+          >Continue to Dashboard</a
+        >
+    </p> -->
+    <!-- <p>
+        Having trouble? <a href="" (click)="whatsApp()">Contact us</a>
+      </p> -->
+        <div class="positionRightBottom p10">
+          <button type="button" style="color: var(--filter-color);" mat-raised-button mat-dialog-close (click)="closeTemplate()"  cdkFocusInitial matTooltip="Cancel changes">
+            Close
+          </button>&nbsp;
+          <!-- <button  class="buttonTheme btn btn-primary btn-elevate kt-login__btn-primary" 
+          [ngClass]="{'kt-spinner kt-spinner--right kt-spinner--md kt-spinner--light': loading}"
+          type="button" (click)="listLibrarySerialCollectionReport(); closeTemplate()" >Go  <i class="pL10p fa fa-arrow-right"></i>  </button> -->
+        </div>
+     
+      </div>
+     
+    </div>
+
+</ng-template>
+
+
+
+
+
+
+
+
+
+
+
+<ng-template #thankyouTemplate>
+  <div  class="hiddenPrint card">
+    <div class=" card-body" style="padding-left: 3rem; text-align: center;">
+      <span class="fwBold">
+       </span>
+       <br>
+       <h1 class="display-3" >Thank You!</h1>
+       <br>
+       <p class="lead"><strong>Your Payment is successful</strong> for Rs {{paidAmount}} with Receipt No. {{receiptNo}}</p>
+       <p class="lead">You can download the invoice from Below!!</p>
+       <p class="lead">
+       <!-- <a class="btn btn-success font-weight-bold px-6 py-3" role="button">Download Receipt</a> -->
+     </p>
+       <br><br><br><br>
+       <button [disabled]="disableDownload" (click)="downloadReceipt()" style="text-align: center;" class="btn buttonTheme btn-primary">
+        Print Receipt</button>
+       <hr>
+       <p class="lead">
+         <!-- <a
+         class="btn  font-weight-bold cursor-pointer"
+         style="background-color: #C9F7F5; color: #1BC5BD;"
+             (click)="redirectToDashboard()"
+             >Continue to Dashboard</a
+           > -->
+           <button type="button" style="color: var(--filter-color);" mat-raised-button mat-dialog-close (click)="closeTemplate()"  cdkFocusInitial matTooltip="Cancel changes">
+            Close
+          </button>&nbsp;
+       </p>
+       <!-- <p>
+           Having trouble? <a href="" (click)="whatsApp()">Contact us</a>
+         </p> -->
+    
+     
+      </div>
+     
+    </div>
+
+</ng-template>
+<!-- Payment Loading Popup -->
+<div class="payment-loading-overlay" *ngIf="showPaymentLoadingPopup">
+  <div class="payment-loading-popup">
+    <div class="spinner-border text-primary" role="status">
+      <span class="sr-only">Loading...</span>
+    </div>
+    <h4 class="mt-3">Please wait</h4>
+    <p>Processing your payment...</p>
+  </div>
+</div>
+<button hidden id="getPosPayment" (click)="openDialogPOS(paymentVerification);" style="text-align: center;" class="btn buttonTheme btn-primary">
+</button>&nbsp;
+
+<button hidden id="openDeviceId" (click)="openDialog(deviceId);" style="text-align: center;" class="btn buttonTheme btn-primary">
+</button>&nbsp;
+
+<ng-template #deviceId>
+  <div  class="card">
+    <div class="card-body" style="padding-left: 4rem;">
+
+     <div class="row">
+      <div class="col-12">
+      <span class="fwBold">
+        <h2>Select Device Id</h2>
+       </span>
+      </div>
+
+       <div class=" kt-space-20  " ></div>
+       <form action="" [formGroup]="validationPaymentDevice">
+       <div class="col-md-3">
+       <mat-form-field class="example">
+        <mat-select placeholder="Select Payment Device" [(ngModel)]="seletedPaymentDevice"
+        formControlName="controlPayment">
+        <mat-option *ngFor="let item of paymentDevices; let index = index;"   [value]="item.deviceId">
+            {{ item.deviceName }}
+        </mat-option>
+      </mat-select>
+      <mat-error *ngIf="isControlPaymentHasError('controlPayment','required')">
+        <strong>Field required</strong>
+      </mat-error>
+    </mat-form-field>
+        </div>
+      </form>
+       </div>
+       <div>
+
+       </div>
+       <div class="row buttonRight">
+        <button type="button" style="color: var(--filter-color);" mat-raised-button mat-dialog-close (click)="closeTemplate()"  cdkFocusInitial matTooltip="Cancel changes">
+          Cancel
+        </button>&nbsp;
+        <button  class="buttonTheme btn btn-primary btn-elevate kt-login__btn-primary"
+        [ngClass]="{'kt-spinner kt-spinner--right kt-spinner--md kt-spinner--light': loading}"
+        type="button" (click)="callInitiate();" >Proceed   <lord-icon
+        src="https://cdn.lordicon.com/iuenvtrd.json"
+        trigger="hover"
+        target=".btn"
+        colors="primary:#ffffff,secondary:#ffffff"
+        class="cursorPointer"
+        stroke="150"
+        style="width:25px;height:20px">
+    </lord-icon> </button>
+       </div>
+    </div>
+  </div>
+</ng-template>
+<ng-template #paymentVerification>
+  <div  class="hiddenPrint card">
+    <div class=" card-body" style="padding-left: 3rem; text-align: center;">
+      <span class="fwBold">
+       </span>
+       <br>
+    <h5 class="" style="font-size: 25px;">Payment Verification</h5>
+    <!-- <span (click)="closePaymentVerification()" class="close">
+      <lord-icon
+      src="https://cdn.lordicon.com/dfyonbvl.json"
+      trigger="hover"
+      colors="primary:{{primaryColour}},secondary:{{primaryColour}}"
+      class="cursorPointer"
+      stroke="110"
+      style="width: 18px; height: 20px"
+    >
+    </lord-icon>
+    </span> -->
+    <br>
+  
+
+    <div  class="spinner-wrapper">
+      <mat-progress-spinner
+        mode="indeterminate"
+        diameter="80"
+        color="accent">
+      </mat-progress-spinner>
+    </div>
+    <div>
+      <h3>Please wait while checking your payment status!!</h3>
+    </div>
+  
+    <br><br>
+    <hr style="margin: 3rem;">
+  
+        <div class="textCenter">
+          <button type="button" style="color: var(--filter-color);" mat-raised-button mat-dialog-close (click)="closePaymentVerification()"  cdkFocusInitial matTooltip="Cancel changes">
+            Cancel
+          </button>&nbsp;
+          <button  (click)="manualCall();" style="text-align: center;" class="btn buttonTheme btn-primary">
+            Check Status Now</button>&nbsp;
+          <!-- <button type="button" style="color: var(--filter-color);" mat-raised-button mat-dialog-close (click)="closeTemplate()"  cdkFocusInitial matTooltip="Close">
+            Close
+          </button>&nbsp; -->
+  
+        </div>
+  
+      </div>
+  
+    </div>
+  
+  </ng-template>

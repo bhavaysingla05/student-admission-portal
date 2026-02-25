@@ -5,6 +5,7 @@ import { getStudentById } from "../services/studentService";
 import { getAdmissionStages } from "../services/stageService";
 import { saveAdmissionApplication } from "../services/admissionService";
 import FooterTabs from "../components/FooterTabs";
+import toast from "react-hot-toast";
 
 const ApplicationTimeline = () => {
   const [student, setStudent] = useState<any>(null);
@@ -12,14 +13,23 @@ const ApplicationTimeline = () => {
   const [formData, setFormData] = useState<any>({});
   const [saving, setSaving] = useState(false);
 
-  const loadData = async () => {
-    const [studentRes, stageRes] = await Promise.all([
-      getStudentById(),
-      getAdmissionStages(),
-    ]);
-    setStudent(studentRes.data);
-    setStages(stageRes.data);
+  const loadData = async (showLoading = true) => {
+    try {
+      if (showLoading) setLoading(true);
+      const [studentRes, stageRes] = await Promise.all([
+        getStudentById(),
+        getAdmissionStages(),
+      ]);
+      setStudent(studentRes.data);
+      setStages(stageRes.data);
+    } catch (e) {
+      console.error("Failed to load data", e);
+    } finally {
+      if (showLoading) setLoading(false);
+    }
   };
+
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadData();
@@ -41,20 +51,26 @@ const ApplicationTimeline = () => {
   const handleSave = async () => {
     try {
       setSaving(true);
+      // Construct payload by merging current student and unsaved formData
       const payload = { ...student, ...formData };
+
       await saveAdmissionApplication(payload);
-      setStudent(payload);
+
+      // ✅ Re-fetch instead of just merging locally to ensure ERP consistency
+      const freshRes = await getStudentById();
+      setStudent(freshRes.data);
       setFormData({});
-      alert("Saved successfully");
+
+      toast.success("Saved successfully");
     } catch (e) {
       console.error(e);
-      alert("Save failed");
+      toast.error("Save failed");
     } finally {
       setSaving(false);
     }
   };
 
-  if (!student)
+  if (loading && !student)
     return (
       <div className="min-h-screen bg-gray-100 pb-24">
         <Header />

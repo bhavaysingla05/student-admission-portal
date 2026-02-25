@@ -26,10 +26,10 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({ student, onView }) =>
           <p className="text-xs text-orange-600 font-semibold mt-0.5 ml-6">{student.applicationNumber}</p>
         </div>
         <span className={`text-[11px] font-bold px-3 py-1 rounded-full uppercase tracking-wide ${student.currentStage?.toLowerCase() === "inquiry"
-            ? "text-amber-700 bg-amber-50"
-            : student.currentStage?.toLowerCase() === "approved"
-              ? "text-green-700 bg-green-50"
-              : "text-blue-700 bg-blue-50"
+          ? "text-amber-700 bg-amber-50"
+          : student.currentStage?.toLowerCase() === "approved"
+            ? "text-green-700 bg-green-50"
+            : "text-blue-700 bg-blue-50"
           }`}>
           {student.currentStage}
         </span>
@@ -72,16 +72,16 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({ student, onView }) =>
         <hr className="border-gray-100" />
 
         {/* COURSE INFO — inline labels, no boxes */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-y-4 gap-x-6 text-sm">
           {[
             { label: "Course", value: student.course },
             { label: "Stream", value: student.stream },
             { label: "Batch", value: student.batch },
             { label: "Session", value: student.session },
           ].map(({ label, value }) => (
-            <div key={label}>
+            <div key={label} className="min-w-0">
               <span className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider">{label}</span>
-              <p className="font-semibold text-gray-800 mt-0.5 truncate text-xs">{value || "—"}</p>
+              <p className="font-bold text-gray-900 mt-1 leading-snug">{value || "—"}</p>
             </div>
           ))}
         </div>

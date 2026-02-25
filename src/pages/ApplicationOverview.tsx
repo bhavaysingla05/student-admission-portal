@@ -129,8 +129,8 @@ export default ApplicationOverview;
 
 /* -------- Helper -------- */
 const Info = ({ label, value }: { label: string; value?: string }) => (
-  <div className="flex flex-col sm:flex-row justify-between gap-1 sm:gap-0">
-    <span className="text-gray-500">{label}</span>
-    <span className="font-medium break-words text-right sm:text-left">{value || "—"}</span>
+  <div className="flex flex-col sm:flex-row justify-between gap-1 sm:gap-4 py-1">
+    <span className="text-gray-500 shrink-0">{label}</span>
+    <span className="font-semibold text-gray-900 sm:text-right leading-tight">{value || "—"}</span>
   </div>
 );

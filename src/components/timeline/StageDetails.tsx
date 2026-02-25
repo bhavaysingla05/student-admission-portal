@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from "react";
-import { Lock as LockIcon, ShieldAlert, CheckCircle2, Upload, FileText, Loader2, Eye, Trash2 } from "lucide-react";
+import { Lock as LockIcon, ShieldAlert, CheckCircle2, Upload, FileText, Loader2, Eye } from "lucide-react";
 import PaymentSummary from "./PaymentSummary";
 import VerificationGate from "../VerificationGate";
 import { uploadDocument } from "../../services/uploadService";

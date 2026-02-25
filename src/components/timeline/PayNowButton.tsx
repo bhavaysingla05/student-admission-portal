@@ -39,7 +39,6 @@ const PayNowButton = ({ stage, student, onPaymentSuccess }: Props) => {
   // Nothing to pay — calculate from txnMapping or fallback
   const resolved = stageSetup ? resolveTxnAmount(stageSetup, student) : null;
   const amount: number = resolved?.amount ?? 0;
-  const receipt: any[] = resolved?.receipt ?? [];
 
   // Hide button if stage is loaded but nothing to pay
   if (fetchError || (stageSetup && amount <= 0)) return null;

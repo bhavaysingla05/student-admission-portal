@@ -95,7 +95,7 @@ export default function Login() {
           _id: data._id,
         })
       );
-      
+
       sessionStorage.setItem("token", data.token);
 
       // ✅ 2. Perform PORTAL LOGIN (Background) to get Master Token
@@ -125,16 +125,16 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row font-[Lato] bg-white relative overflow-hidden">
+    <div className="min-h-screen flex flex-col md:flex-row font-[Lato] bg-white relative">
 
       {/* ================= LEFT PANEL (60%) ================= */}
       <div className="hidden md:flex w-full md:w-3/5 bg-[#FFF7ED] flex-col justify-center px-8 lg:px-16 border-r border-orange-100 relative overflow-hidden">
 
-        {/* 🎨 Scattered Icons */}
-        <GraduationCap size={250} className="absolute top-2 left-8 opacity-[0.06] text-[#F68B1E]" />
-        <Laptop size={200} className="absolute top-10 right-10 opacity-[0.06] text-[#F68B1E]" />
-        <ClipboardList size={180} className="absolute bottom-20 left-20 opacity-[0.06] text-[#F68B1E]" />
-        <FileText size={220} className="absolute bottom-4 right-24 opacity-[0.06] text-[#F68B1E]" />
+        {/* 🎨 Scattered Icons - pointer-events-none prevents blocking clicks */}
+        <GraduationCap size={250} className="absolute top-2 left-8 opacity-[0.06] text-[#F68B1E] pointer-events-none" />
+        <Laptop size={200} className="absolute top-10 right-10 opacity-[0.06] text-[#F68B1E] pointer-events-none" />
+        <ClipboardList size={180} className="absolute bottom-20 left-20 opacity-[0.06] text-[#F68B1E] pointer-events-none" />
+        <FileText size={220} className="absolute bottom-4 right-24 opacity-[0.06] text-[#F68B1E] pointer-events-none" />
 
         {/* LOGO + TEXT */}
         <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 mb-10 relative">
@@ -156,12 +156,21 @@ export default function Login() {
       </div>
 
       {/* ================= RIGHT PANEL (40%) ================= */}
-      <div className="w-full md:w-2/5 flex items-center justify-center px-4 sm:px-6 md:px-10 py-8 sm:py-12 relative overflow-hidden">
+      <div className="w-full md:w-2/5 flex flex-col items-center justify-center px-4 sm:px-6 md:px-10 py-12 md:py-16 relative">
 
-        {/* Background Icons */}
-        <Monitor size={150} className="absolute top-10 right-5 opacity-[0.04] text-[#F68B1E] hidden sm:block" />
-        <PenLine size={150} className="absolute bottom-10 left-6 opacity-[0.04] text-[#F68B1E] hidden sm:block" />
-        <BookOpenCheck size={140} className="absolute top-1/2 right-10 -translate-y-1/2 opacity-[0.05] text-[#F68B1E] hidden sm:block" />
+        {/* 📱 Mobile Logo + Welcome (Visible only on mobile) */}
+        <div className="md:hidden flex flex-col items-center mb-10 animate-in fade-in slide-in-from-top-4 duration-1000">
+          <img src="/entitylogo.jpg" alt="University Logo" className="w-24 h-auto rounded-xl shadow-md mb-4" />
+          <h2 className="text-2xl font-bold text-[#F68B1E] text-center px-4">
+            Lingaya's Vidyapeeth
+            <span className="block text-base font-medium text-gray-500 mt-1">Admission Portal</span>
+          </h2>
+        </div>
+
+        {/* Background Icons - pointer-events-none prevents blocking clicks */}
+        <Monitor size={150} className="absolute top-10 right-5 opacity-[0.04] text-[#F68B1E] hidden sm:block pointer-events-none" />
+        <PenLine size={150} className="absolute bottom-10 left-6 opacity-[0.04] text-[#F68B1E] hidden sm:block pointer-events-none" />
+        <BookOpenCheck size={140} className="absolute top-1/2 right-10 -translate-y-1/2 opacity-[0.05] text-[#F68B1E] hidden sm:block pointer-events-none" />
 
         <div className="max-w-md w-full relative z-10">
           <div className="overflow-hidden relative min-h-[280px] sm:h-[300px]">
@@ -221,7 +230,7 @@ export default function Login() {
                     type="text"
                     inputMode="numeric"
                     value={state.otp[i] || ""}
-                    className="w-10 h-10 sm:w-12 sm:h-12 text-center text-lg sm:text-xl border border-orange-300 rounded-xl bg-[#FFF9F3] focus:ring-2 focus:ring-[#F68B1E] focus:border-[#F68B1E]"
+                    className="w-10 h-11 sm:w-12 sm:h-12 text-center text-lg sm:text-xl border border-orange-300 rounded-xl bg-[#FFF9F3] focus:ring-2 focus:ring-[#F68B1E] focus:border-[#F68B1E] transition-all"
                     onChange={(e) => {
                       const val = e.target.value;
                       if (!/^[0-9]?$/.test(val)) return;

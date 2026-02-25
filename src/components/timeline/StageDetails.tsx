@@ -304,17 +304,17 @@ const StageDetails = ({
     <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
 
       {/* ================= HEADER ================= */}
-      <div className="border-b border-gray-100 px-4 py-3 flex justify-between items-center">
+      <div className="border-b border-gray-100 px-4 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div className="flex flex-col">
-          <h3 className="font-bold text-gray-900">{stage.stage}</h3>
-          <div className="flex items-center gap-2 mt-0.5">
-            <span className="text-[11px] font-semibold text-orange-600 uppercase tracking-wide">{stage.status}</span>
+          <h3 className="font-bold text-gray-900 text-lg sm:text-base">{stage.stage}</h3>
+          <div className="flex flex-wrap items-center gap-2 mt-1 sm:mt-0.5">
+            <span className="text-[10px] sm:text-[11px] font-bold bg-orange-50 text-orange-600 px-2 py-0.5 rounded-full uppercase tracking-wide border border-orange-100">{stage.status}</span>
             {allVerified ? (
-              <span className="flex items-center gap-1 text-[10px] text-green-600 font-bold uppercase">
+              <span className="flex items-center gap-1 text-[10px] text-green-600 font-bold uppercase py-0.5">
                 <CheckCircle2 size={10} /> Account Verified
               </span>
             ) : (
-              <span className="flex items-center gap-1 text-[10px] text-red-500 font-bold uppercase">
+              <span className="flex items-center gap-1 text-[10px] text-red-500 font-bold uppercase py-0.5">
                 <ShieldAlert size={10} /> Verification Pending
               </span>
             )}
@@ -322,10 +322,10 @@ const StageDetails = ({
         </div>
 
         {isActiveStage && (
-          <div className="flex gap-2">
+          <div className="flex gap-2 w-full sm:w-auto mt-2 sm:mt-0">
             <button
               onClick={handleEditClick}
-              className={`text-xs font-bold px-4 py-2 rounded-xl border-2 transition-all shadow-sm flex items-center gap-2 
+              className={`flex-1 sm:flex-none text-[11px] sm:text-xs font-bold px-3 sm:px-4 py-2 rounded-xl border-2 transition-all shadow-sm flex items-center justify-center gap-2 
                 ${!allVerified
                   ? "bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100"
                   : editMode
@@ -339,7 +339,7 @@ const StageDetails = ({
               <button
                 onClick={onSave}
                 disabled={saving}
-                className="text-xs font-bold px-4 py-2 rounded-xl bg-orange-500 text-white hover:bg-orange-600 disabled:opacity-50 transition-all shadow-md shadow-orange-100 flex items-center gap-2"
+                className="flex-1 sm:flex-none text-[11px] sm:text-xs font-bold px-3 sm:px-4 py-2 rounded-xl bg-orange-500 text-white hover:bg-orange-600 disabled:opacity-50 transition-all shadow-md shadow-orange-100 flex items-center justify-center gap-2"
               >
                 {saving ? (
                   <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -361,16 +361,16 @@ const StageDetails = ({
       <div className="px-4 py-3 space-y-3">
         {/* ================= TABS ================= */}
         {visibleTabs.length > 1 && (
-          <div className="flex flex-wrap gap-1.5 bg-gray-100 rounded-lg p-1">
+          <div className="flex overflow-x-auto gap-1.5 bg-gray-50/50 rounded-xl p-1.5 no-scrollbar border border-gray-100 shadow-inner">
             {visibleTabs.map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
                 className={`
-                px-3 py-1.5 text-xs sm:text-sm font-medium rounded-md transition-all whitespace-nowrap
+                px-4 py-2 text-xs font-bold rounded-lg transition-all whitespace-nowrap uppercase tracking-wider
                 ${safeTab === tab
-                    ? "bg-gray-800 text-white shadow-sm"
-                    : "text-gray-500 hover:text-gray-700 hover:bg-gray-200/60"
+                    ? "bg-orange-500 text-white shadow-md shadow-orange-100"
+                    : "text-gray-500 hover:text-orange-600 hover:bg-orange-50/50"
                   }
               `}
               >
@@ -381,7 +381,7 @@ const StageDetails = ({
         )}
 
         {/* ================= FIELDS (active tab only) ================= */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+        <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-3">
           {(grouped[safeTab] || []).map(renderField)}
         </div>
 

@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useMemo } from "react";
 import { Lock as LockIcon, Upload, FileText, Loader2, Eye } from "lucide-react";
 import PaymentSummary from "./PaymentSummary";
 import VerificationGate from "../VerificationGate";
@@ -104,15 +104,13 @@ const StageDetails = ({
   }, [onStudentRefresh]);
 
   const isActiveStage = stage.status === "active";
-  const fields: any[] = stage.fields || [];
+  const fields: any[] = useMemo(() => stage.fields || [], [stage.fields]);
 
   useEffect(() => {
     console.log("DEBUG: All Stage Fields:", fields.map(f => ({ key: f.key, label: f.displayName, isFather: isFatherMobileField(f) })));
   }, [fields]);
 
   const fatherMobile = student.fatherMobile || student.fatherMobileNumber || "";
-  const motherMobile = student.motherMobile || student.motherMobileNumber || "";
-  const email = student.email || "";
 
   const allVerified = verifiedStatus.fatherMobile;
 

@@ -10,9 +10,48 @@ interface Props {
 const ApplicationFormCard = ({ student }: Props) => {
     const [generating, setGenerating] = useState(false);
 
+    const loadImage = (url: string): Promise<string> => {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.crossOrigin = "anonymous";
+            img.onload = () => {
+                const canvas = document.createElement("canvas");
+                canvas.width = img.width;
+                canvas.height = img.height;
+                const ctx = canvas.getContext("2d");
+                if (!ctx) return resolve("");
+
+                ctx.drawImage(img, 0, 0);
+
+                // Process pixels to make background white
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const data = imageData.data;
+
+                for (let i = 0; i < data.length; i += 4) {
+                    const r = data[i];
+                    const g = data[i + 1];
+                    const b = data[i + 2];
+
+                    // If pixel is near-black (background), make it white
+                    if (r < 40 && g < 40 && b < 40) {
+                        data[i] = 255;   // Red
+                        data[i + 1] = 255; // Green
+                        data[i + 2] = 255; // Blue
+                    }
+                }
+
+                ctx.putImageData(imageData, 0, 0);
+                resolve(canvas.toDataURL("image/jpeg", 0.9));
+            };
+            img.onerror = reject;
+            img.src = url;
+        });
+    };
+
     const generatePDF = async () => {
         try {
             setGenerating(true);
+            const logoData = await loadImage("/logowithbg.png").catch(() => null);
             const doc = new jsPDF("p", "mm", "a4");
 
             const drawChecklistPage = () => {
@@ -391,7 +430,7 @@ const ApplicationFormCard = ({ student }: Props) => {
 
                 // Email / Roll No
                 if (isTemporary) {
-                    doc.text("Email id.:- ........................................... Aadhar No.:- ........................................", 15, y);
+                    doc.text("Email id.:- ......................................................... Aadhar No.:- ........................................", 15, y);
                     if (student?.email) { doc.setFont("helvetica", "bold"); doc.text(student.email, 35, y - 1); doc.setFont("times", "normal"); }
                     if (aadharVal) {
                         doc.setFont("helvetica", "bold");
@@ -399,7 +438,7 @@ const ApplicationFormCard = ({ student }: Props) => {
                         doc.setFont("times", "normal");
                     }
                 } else {
-                    doc.text("Email id.:- ...........................................", 15, y);
+                    doc.text("Email id.:- .....................................................................", 15, y);
                     if (student?.email) { doc.setFont("helvetica", "bold"); doc.text(student.email, 35, y - 1); doc.setFont("times", "normal"); }
 
                     doc.text("Roll / Reg. No", 100, y);
@@ -794,6 +833,523 @@ const ApplicationFormCard = ({ student }: Props) => {
                 doc.rect(5, 5, 200, 287);
             };
 
+            const drawLetterPage = () => {
+                doc.addPage();
+
+                // Outer border
+                doc.setLineWidth(0.8);
+                doc.rect(5, 5, 200, 287);
+
+                let cy = 15;
+
+                // Header (Same as Page 1 for consistency)
+                if (logoData) {
+                    doc.addImage(logoData, "JPEG", 15, cy - 8, 20, 20);
+                }
+
+                doc.setFont("times", "italic");
+                doc.setFontSize(22);
+                const titleStr = "Lingaya's Vidyapeeth, Faridabad-121002";
+                const textX = logoData ? 40 : 15;
+                doc.text(titleStr, textX, cy);
+                doc.setLineWidth(0.2);
+                doc.line(textX, cy + 1, textX + doc.getTextWidth(titleStr), cy + 1);
+
+                cy += 4;
+                doc.setFontSize(10);
+                doc.text("(Deemed to-be-University u/s - 3 of UGC Act-1956)", textX, cy);
+                cy += 4;
+                doc.text("Nachauli, Old Faridabad - Jasana Road, Faridabad - 121002, Ph. 0129-2598200 -205", textX, cy);
+
+                cy += 3;
+                doc.setLineWidth(0.5); doc.line(15, cy, 195, cy);
+                cy += 1;
+                doc.setLineWidth(0.2); doc.line(15, cy, 195, cy);
+
+                cy += 10;
+                doc.setFont("times", "normal");
+                doc.setFontSize(12);
+                doc.text(`Date: ________________`, 140, cy);
+
+                cy += 15;
+                doc.text("To", 15, cy);
+                cy += 6;
+                doc.text("The Director", 15, cy);
+                cy += 6;
+                doc.text("Admissions", 15, cy);
+                cy += 6;
+                doc.text("Lingaya’s Vidyapeeth", 15, cy);
+                cy += 6;
+                doc.text("Nachauli, Faridabad.", 15, cy);
+
+                cy += 15;
+                doc.text("Respected Sir,", 15, cy);
+
+                cy += 10;
+                const nameStr = student?.name ? ` ${student.name.toUpperCase()} ` : " _______________________ ";
+                const fatherStr = student?.fatherName ? ` MR. ${student.fatherName.toUpperCase()} ` : " MR. _________________ ";
+                const courseStr = student?.course ? ` ${student.course.toUpperCase()} ` : " _______________ ";
+                const sessionStr = student?.session ? ` ${student.session} ` : " 20__20__ ";
+
+                doc.text("I", 15, cy);
+                doc.setFont("times", "bold");
+                doc.text(nameStr, 15 + doc.getTextWidth("I"), cy);
+                const nameW = doc.getTextWidth(nameStr);
+                doc.setFont("times", "normal");
+                doc.text("S/o / D/o", 15 + doc.getTextWidth("I") + nameW, cy);
+                const sodW = doc.getTextWidth("S/o / D/o");
+                doc.setFont("times", "bold");
+                doc.text(fatherStr, 15 + doc.getTextWidth("I") + nameW + sodW, cy);
+                const fatherW = doc.getTextWidth(fatherStr);
+                doc.setFont("times", "normal");
+                doc.text("have applied", 15 + doc.getTextWidth("I") + nameW + sodW + fatherW, cy);
+
+                cy += 8;
+                doc.text("for", 15, cy);
+                doc.setFont("times", "bold");
+                doc.text(courseStr, 15 + doc.getTextWidth("for"), cy);
+                const courseW = doc.getTextWidth(courseStr);
+                doc.setFont("times", "normal");
+                doc.text("course in your esteemed university for the session", 15 + doc.getTextWidth("for") + courseW, cy);
+
+                cy += 8;
+                doc.setFont("times", "bold");
+                doc.text(sessionStr, 15, cy);
+                const sessionW = doc.getTextWidth(sessionStr);
+                doc.setFont("times", "normal");
+                const ptAmount1 = ". I am paying amount of Rs.";
+                doc.text(ptAmount1, 15 + sessionW, cy);
+                const ptAmount1W = doc.getTextWidth(ptAmount1);
+
+                // Interactive Amount Field
+                const tfAmount = new (doc as any).AcroFormTextField();
+                tfAmount.fieldName = "provisional_amount";
+                tfAmount.Rect = [15 + sessionW + ptAmount1W + 1, cy - 4, 35, 5];
+                doc.addField(tfAmount);
+                doc.rect(15 + sessionW + ptAmount1W + 1, cy - 4, 35, 5); // Visual box
+
+                doc.text("on account of provisional", 15 + sessionW + ptAmount1W + 37, cy);
+
+                cy += 8;
+                const ptBefore1 = "admission & rest of the amount I will pay before";
+                doc.text(ptBefore1, 15, cy);
+                const ptBefore1W = doc.getTextWidth(ptBefore1);
+
+                // Interactive Deadline Field
+                const tfDeadline = new (doc as any).AcroFormTextField();
+                tfDeadline.fieldName = "payment_deadline";
+                tfDeadline.Rect = [15 + ptBefore1W + 1, cy - 4, 45, 5];
+                doc.addField(tfDeadline);
+                doc.rect(15 + ptBefore1W + 1, cy - 4, 45, 5); // Visual box
+
+                doc.text(". I request", 15 + ptBefore1W + 47, cy);
+
+                cy += 8;
+                doc.text("you to kindly allow me to pay the fee on semester wise instead of yearly basis", 15, cy);
+
+                cy += 8;
+                doc.text("due to some financial constraints.", 15, cy);
+
+                cy += 15;
+                doc.text("I will be thankful to you.", 15, cy);
+
+                cy += 20;
+                doc.text("Yours sincerely", 15, cy);
+
+                cy += 30;
+                doc.text("Student sign", 15, cy);
+                doc.text("Parent sign", 140, cy);
+
+                cy += 20;
+                doc.text("Approved by:", 15, cy);
+                cy += 8;
+                doc.text("Name: ____________________________", 15, cy);
+                cy += 8;
+                doc.text("Designation: _______________________", 15, cy);
+            };
+
+            const drawUndertakingPage = () => {
+                doc.addPage();
+
+                // Outer border
+                doc.setLineWidth(0.8);
+                doc.rect(5, 5, 200, 287);
+
+                let cy = 15;
+
+                // Header
+                if (logoData) {
+                    doc.addImage(logoData, "JPEG", 15, cy - 8, 20, 20);
+                }
+
+                doc.setFont("times", "italic");
+                doc.setFontSize(22);
+                const titleStr = "Lingaya's Vidyapeeth, Faridabad-121002";
+                const textX = logoData ? 40 : 15;
+                doc.text(titleStr, textX, cy);
+                doc.setLineWidth(0.2);
+                doc.line(textX, cy + 1, textX + doc.getTextWidth(titleStr), cy + 1);
+
+                cy += 4;
+                doc.setFontSize(10);
+                doc.text("(Deemed to-be-University u/s - 3 of UGC Act-1956)", textX, cy);
+                cy += 4;
+                doc.text("Nachauli, Old Faridabad - Jasana Road, Faridabad - 121002, Ph. 0129-2598200 -205", textX, cy);
+
+                cy += 3;
+                doc.setLineWidth(0.5); doc.line(15, cy, 195, cy);
+                cy += 1;
+                doc.setLineWidth(0.2); doc.line(15, cy, 195, cy);
+
+                cy += 10;
+                doc.setFont("times", "normal");
+                doc.setFontSize(12);
+                doc.text(`Date: ________________`, 140, cy);
+
+                cy += 15;
+                doc.setFont("times", "bold");
+                doc.setFontSize(14);
+                const mainTitle = "Undertaking for Provisional admission in case of Result";
+                doc.text(mainTitle, 105, cy, { align: "center" });
+                cy += 6;
+                const subTitle = "awaited/supplementary";
+                doc.text(subTitle, 105, cy, { align: "center" });
+
+                const twTitle1 = doc.getTextWidth(mainTitle);
+                const twTitle2 = doc.getTextWidth(subTitle);
+                doc.setLineWidth(0.3);
+                doc.line(105 - twTitle1 / 2, cy - 5, 105 + twTitle1 / 2, cy - 5);
+                doc.line(105 - twTitle2 / 2, cy + 1, 105 + twTitle2 / 2, cy + 1);
+
+                cy += 12;
+                const whomStr = "TO WHOM SO EVER IT MAY CONCERN";
+                doc.text(whomStr, 105, cy, { align: "center" });
+                doc.line(105 - doc.getTextWidth(whomStr) / 2, cy + 1, 105 + doc.getTextWidth(whomStr) / 2, cy + 1);
+
+                cy += 15;
+                doc.setFont("times", "normal");
+                doc.setFontSize(12);
+                doc.text("I", 15, cy);
+
+                const iW = doc.getTextWidth("I");
+                let nameSpace = 62;
+
+                if (student?.name) {
+                    doc.setFont("times", "bold");
+                    const nStr = ` ${student.name.toUpperCase()} `;
+                    doc.text(nStr, 15 + iW, cy);
+                    nameSpace = doc.getTextWidth(nStr);
+                    doc.setFont("times", "normal");
+                } else {
+                    const tfName = new (doc as any).AcroFormTextField();
+                    tfName.fieldName = "undertaking_student_name";
+                    tfName.Rect = [15 + iW + 1, cy - 4, 60, 5];
+                    doc.addField(tfName);
+                    doc.rect(15 + iW + 1, cy - 4, 60, 5);
+                }
+
+                doc.text("hereby declare that my result awaited/I have scored", 15 + iW + nameSpace, cy);
+
+                cy += 8;
+                doc.text("scored", 15, cy);
+                const tfPerc = new (doc as any).AcroFormTextField();
+                tfPerc.fieldName = "undertaking_percentage";
+                tfPerc.Rect = [15 + doc.getTextWidth("scored") + 1, cy - 4, 15, 5];
+                doc.addField(tfPerc);
+                doc.rect(15 + doc.getTextWidth("scored") + 1, cy - 4, 15, 5);
+
+                const percX = 15 + doc.getTextWidth("scored") + 17;
+                doc.text("% total marks in 12th class or", percX, cy);
+                const t1W = doc.getTextWidth("% total marks in 12th class or");
+
+                const tfCourse1 = new (doc as any).AcroFormTextField();
+                tfCourse1.fieldName = "undertaking_course_from";
+                tfCourse1.Rect = [percX + t1W + 1, cy - 4, 30, 5];
+                doc.addField(tfCourse1);
+                doc.rect(percX + t1W + 1, cy - 4, 30, 5);
+
+                doc.text("course and got", percX + t1W + 32, cy);
+
+                cy += 8;
+                doc.text("supplementary in", 15, cy);
+                const tfSupSubject = new (doc as any).AcroFormTextField();
+                tfSupSubject.fieldName = "undertaking_sup_subject";
+                tfSupSubject.Rect = [15 + doc.getTextWidth("supplementary in") + 1, cy - 4, 35, 5];
+                doc.addField(tfSupSubject);
+                doc.rect(15 + doc.getTextWidth("supplementary in") + 1, cy - 4, 35, 5);
+
+                const supX = 15 + doc.getTextWidth("supplementary in") + 37;
+                doc.text("subject. On the basis of overall 12th percentage, I", supX, cy);
+
+                cy += 8;
+                doc.text("am eligible for provisional admission in", 15, cy);
+                const eligW = doc.getTextWidth("am eligible for provisional admission in");
+                let courseSpace = 47;
+
+                if (student?.course) {
+                    doc.setFont("times", "bold");
+                    const cStr = ` ${student.course.toUpperCase()} `;
+                    doc.text(cStr, 15 + eligW, cy);
+                    courseSpace = doc.getTextWidth(cStr);
+                    doc.setFont("times", "normal");
+                } else {
+                    const tfCourse2 = new (doc as any).AcroFormTextField();
+                    tfCourse2.fieldName = "undertaking_course_to";
+                    tfCourse2.Rect = [15 + eligW + 1, cy - 4, 45, 5];
+                    doc.addField(tfCourse2);
+                    doc.rect(15 + eligW + 1, cy - 4, 45, 5);
+                }
+
+                doc.text("course with", 15 + eligW + courseSpace, cy);
+
+                cy += 8;
+                const tfAmount = new (doc as any).AcroFormTextField();
+                tfAmount.fieldName = "undertaking_amount";
+                tfAmount.Rect = [15, cy - 4, 25, 5];
+                doc.addField(tfAmount);
+                doc.rect(15, cy - 4, 25, 5);
+
+                doc.text("amount. In case of failure in qualifying my supplementary exam, my", 15 + 26, cy);
+
+                cy += 8;
+                doc.text("provisional admission will automatically terminated and amount deposited will", 15, cy);
+
+                cy += 8;
+                doc.text("not be refunded.", 15, cy);
+
+                cy += 15;
+                doc.setFont("times", "bold");
+                const noteText = "Note- I declare that all the details provided above are true to the best of my knowledge. Any Discrepancy in the same will be solely my responsibility.";
+                const splitNote = doc.splitTextToSize(noteText, 180);
+                doc.text(splitNote, 15, cy);
+
+                cy += 25;
+                doc.setFont("times", "normal");
+                doc.text("Student sign", 15, cy);
+                doc.text("Parent sign", 140, cy);
+
+                cy += 20;
+                doc.text("Approved by:", 15, cy);
+                cy += 8;
+                doc.text("Name: ____________________________", 15, cy);
+                cy += 8;
+                doc.text("Designation: _______________________", 15, cy);
+            };
+
+            const drawLateSubmissionPage = () => {
+                doc.addPage();
+
+                // Outer border
+                doc.setLineWidth(0.8);
+                doc.rect(5, 5, 200, 287);
+
+                let cy = 15;
+
+                // Header
+                if (logoData) {
+                    doc.addImage(logoData, "JPEG", 15, cy - 8, 20, 20);
+                }
+
+                doc.setFont("times", "italic");
+                doc.setFontSize(22);
+                const titleStr = "Lingaya's Vidyapeeth, Faridabad-121002";
+                const textX = logoData ? 40 : 15;
+                doc.text(titleStr, textX, cy);
+                doc.setLineWidth(0.2);
+                doc.line(textX, cy + 1, textX + doc.getTextWidth(titleStr), cy + 1);
+
+                cy += 4;
+                doc.setFontSize(10);
+                doc.text("(Deemed to-be-University u/s - 3 of UGC Act-1956)", textX, cy);
+                cy += 4;
+                doc.text("Nachauli, Old Faridabad - Jasana Road, Faridabad - 121002, Ph. 0129-2598200 -205", textX, cy);
+
+                cy += 3;
+                doc.setLineWidth(0.5); doc.line(15, cy, 195, cy);
+                cy += 1;
+                doc.setLineWidth(0.2); doc.line(15, cy, 195, cy);
+
+                cy += 15;
+                doc.setFont("times", "bold");
+                doc.setFontSize(14);
+                const mainTitle = "UNDERTAKING FOR LATE SUBMISSION OF DOCUMENTS";
+                doc.text(mainTitle, 105, cy, { align: "center" });
+                doc.setLineWidth(0.3);
+                doc.line(105 - doc.getTextWidth(mainTitle) / 2, cy + 1, 105 + doc.getTextWidth(mainTitle) / 2, cy + 1);
+
+                cy += 15;
+                doc.setFont("times", "normal");
+                doc.setFontSize(12);
+                doc.text("I", 15, cy);
+
+                let nameX = 15 + doc.getTextWidth("I") + 2;
+                let postNameX = nameX + 60;
+                if (student?.name) {
+                    doc.setFont("times", "bold");
+                    doc.text(student.name.toUpperCase(), nameX, cy);
+                    postNameX = nameX + doc.getTextWidth(student.name.toUpperCase()) + 2;
+                    doc.setFont("times", "normal");
+                } else {
+                    const tfName = new (doc as any).AcroFormTextField();
+                    tfName.fieldName = "late_student_name";
+                    tfName.Rect = [nameX, cy - 4, 60, 5];
+                    doc.addField(tfName);
+                    doc.rect(nameX, cy - 4, 60, 5);
+                }
+
+                doc.text("D/S/O", postNameX, cy);
+                let fatherX = postNameX + doc.getTextWidth("D/S/O") + 2;
+                let postFatherX = fatherX + 60;
+                if (student?.fatherName) {
+                    doc.setFont("times", "bold");
+                    doc.text(student.fatherName.toUpperCase(), fatherX, cy);
+                    postFatherX = fatherX + doc.getTextWidth(student.fatherName.toUpperCase()) + 2;
+                    doc.setFont("times", "normal");
+                } else {
+                    const tfFather = new (doc as any).AcroFormTextField();
+                    tfFather.fieldName = "late_father_name";
+                    tfFather.Rect = [fatherX, cy - 4, 60, 5];
+                    doc.addField(tfFather);
+                    doc.rect(fatherX, cy - 4, 60, 5);
+                }
+                doc.text("have applied", postFatherX, cy);
+
+                cy += 8;
+                doc.text("for", 15, cy);
+                let courseX = 15 + doc.getTextWidth("for") + 2;
+                let postCourseX = courseX + 80;
+                if (student?.course) {
+                    doc.setFont("times", "bold");
+                    doc.text(student.course.toUpperCase(), courseX, cy);
+                    postCourseX = courseX + doc.getTextWidth(student.course.toUpperCase()) + 2;
+                    doc.setFont("times", "normal");
+                } else {
+                    const tfCourse = new (doc as any).AcroFormTextField();
+                    tfCourse.fieldName = "late_course";
+                    tfCourse.Rect = [courseX, cy - 4, 80, 5];
+                    doc.addField(tfCourse);
+                    doc.rect(courseX, cy - 4, 80, 5);
+                }
+                doc.text("course in your esteemed University for the", postCourseX, cy);
+
+                cy += 8;
+                doc.text("session", 15, cy);
+                let sessX = 15 + doc.getTextWidth("session") + 2;
+                let postSessX = sessX + 30;
+                if (student?.session) {
+                    doc.setFont("times", "bold");
+                    doc.text(student.session, sessX, cy);
+                    postSessX = sessX + doc.getTextWidth(student.session) + 2;
+                    doc.setFont("times", "normal");
+                } else {
+                    const tfSess = new (doc as any).AcroFormTextField();
+                    tfSess.fieldName = "late_session";
+                    tfSess.Rect = [sessX, cy - 4, 30, 5];
+                    doc.addField(tfSess);
+                    doc.rect(sessX, cy - 4, 30, 5);
+                }
+                doc.text("undertake to produce the following certificate related to my", postSessX, cy);
+
+                cy += 8;
+                doc.text("admission at Lingaya's Vidyapeeth (Deemed to be University) by", 15, cy);
+                const dateX = 15 + doc.getTextWidth("admission at Lingaya's Vidyapeeth (Deemed to be University) by") + 2;
+                const tfDate1 = new (doc as any).AcroFormTextField();
+                tfDate1.fieldName = "late_deadline_1";
+                tfDate1.Rect = [dateX, cy - 4, 40, 5];
+                doc.addField(tfDate1);
+                doc.rect(dateX, cy - 4, 40, 5);
+
+                cy += 10;
+                for (let i = 1; i <= 5; i++) {
+                    doc.text(`${i}.`, 15, cy);
+                    const tfDoc = new (doc as any).AcroFormTextField();
+                    tfDoc.fieldName = `late_doc_${i}`;
+                    tfDoc.Rect = [20, cy - 4, 150, 5];
+                    doc.addField(tfDoc);
+                    doc.rect(20, cy - 4, 150, 5);
+                    cy += 7;
+                }
+
+                cy += 5;
+                doc.text("I undertake that, in case I fail to produce the above certificate by", 15, cy);
+                const dateX2 = 15 + doc.getTextWidth("I undertake that, in case I fail to produce the above certificate by") + 2;
+                const tfDate2 = new (doc as any).AcroFormTextField();
+                tfDate2.fieldName = "late_deadline_2";
+                tfDate2.Rect = [dateX2, cy - 4, 40, 5];
+                doc.addField(tfDate2);
+                doc.rect(dateX2, cy - 4, 40, 5);
+
+                cy += 8;
+                doc.text("admission will be automatically and summarily cancelled without showing any reason thereof", 15, cy);
+                cy += 8;
+                doc.text("and all my fees paid by me will be forfeited.", 15, cy);
+
+                cy += 20;
+                doc.setFont("times", "bold");
+                doc.text("Name &Signature of the Student", 110, cy);
+                cy += 6;
+                doc.setFont("times", "normal");
+                doc.text("Mobile No:", 110, cy);
+                if (student?.phone) {
+                    doc.setFont("times", "bold");
+                    doc.text(student.phone, 130, cy);
+                    doc.setFont("times", "normal");
+                } else {
+                    const tfMob1 = new (doc as any).AcroFormTextField();
+                    tfMob1.fieldName = "late_student_mobile";
+                    tfMob1.Rect = [130, cy - 4, 40, 5];
+                    doc.addField(tfMob1);
+                    doc.rect(130, cy - 4, 40, 5);
+                }
+                cy += 6;
+                doc.text("Date:", 110, cy);
+                const tfDate3 = new (doc as any).AcroFormTextField();
+                tfDate3.fieldName = "late_student_date";
+                tfDate3.Rect = [130, cy - 4, 40, 5];
+                doc.addField(tfDate3);
+                doc.rect(130, cy - 4, 40, 5);
+
+                cy += 15;
+                const guardianNote = "I understand that, my ward has not produced the above certificates during admission, and the same has to be submitted by him/her by";
+                const splitNote = doc.splitTextToSize(guardianNote, 180);
+                doc.text(splitNote, 15, cy);
+                const noteLastLineW = doc.getTextWidth("same has to be submitted by him/her by");
+                const tfDate4 = new (doc as any).AcroFormTextField();
+                tfDate4.fieldName = "late_guardian_deadline";
+                tfDate4.Rect = [15 + noteLastLineW + 2, cy + 5, 40, 5];
+                doc.addField(tfDate4);
+                doc.rect(15 + noteLastLineW + 2, cy + 5, 40, 5);
+
+                cy += 12;
+                doc.text("I have carefully studied the above undertaking.", 15, cy);
+
+                cy += 20;
+                doc.setFont("times", "bold");
+                doc.text("Name & Signature of Guardian", 110, cy);
+                cy += 6;
+                doc.setFont("times", "normal");
+                doc.text("Mobile No:", 110, cy);
+                const gMob = student?.fatherMobile || student?.fatherMobileNumber || "";
+                if (gMob) {
+                    doc.setFont("times", "bold");
+                    doc.text(gMob, 130, cy);
+                    doc.setFont("times", "normal");
+                } else {
+                    const tfMob2 = new (doc as any).AcroFormTextField();
+                    tfMob2.fieldName = "late_guardian_mobile";
+                    tfMob2.Rect = [130, cy - 4, 40, 5];
+                    doc.addField(tfMob2);
+                    doc.rect(130, cy - 4, 40, 5);
+                }
+                cy += 6;
+                doc.text("Date:", 110, cy);
+                const tfDate5 = new (doc as any).AcroFormTextField();
+                tfDate5.fieldName = "late_guardian_date";
+                tfDate5.Rect = [130, cy - 4, 40, 5];
+                doc.addField(tfDate5);
+                doc.rect(130, cy - 4, 40, 5);
+            };
+
             // Page 1: Admission Checklist
             drawChecklistPage();
 
@@ -822,11 +1378,20 @@ const ApplicationFormCard = ({ student }: Props) => {
             // Draw Temporary Section (Bottom)
             drawSection(160, true);
 
-            // Final bounding box for ID Card page
+            // Bounding box for ID Card page
             doc.setLineWidth(0.8);
             doc.rect(5, 5, 200, 287);
 
-            doc.save(`ID_Card_Form_${student?.name || "Student"}.pdf`);
+            // Page 6: Permission Letter
+            drawLetterPage();
+
+            // Page 7: Provisional Undertaking
+            drawUndertakingPage();
+
+            // Page 8: Late Submission Undertaking
+            drawLateSubmissionPage();
+
+            doc.save(`Application_Form_${student?.name || "Student"}.pdf`);
             toast.success("PDF Downloaded successfully!");
         } catch (err) {
             console.error(err);

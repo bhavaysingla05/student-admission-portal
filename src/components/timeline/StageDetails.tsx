@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from "react";
-import { Lock as LockIcon, ShieldAlert, CheckCircle2, Upload, FileText, Loader2, Eye } from "lucide-react";
+import { Lock as LockIcon, Upload, FileText, Loader2, Eye } from "lucide-react";
 import PaymentSummary from "./PaymentSummary";
 import VerificationGate from "../VerificationGate";
 import { uploadDocument } from "../../services/uploadService";
@@ -13,6 +13,21 @@ const isFilled = (v: any) =>
   v !== null &&
   v !== undefined &&
   !(typeof v === "string" && v.trim() === "");
+
+const isFatherMobileField = (field: any) => {
+  if (!field) return false;
+  const key = String(field.key || "").toLowerCase();
+  const name = String(field.displayName || "").toLowerCase();
+
+  const combined = (key + " " + name).replace(/_/g, " ").replace(/-/g, " ");
+  const hasParent = combined.includes("father") || combined.includes("parent") || combined.includes("guardian");
+  const hasContact = combined.includes("mobile") || combined.includes("phone") || combined.includes("number") ||
+    combined.includes("contact") || combined.includes("cell") || combined.includes("no");
+
+  const isMotherOrEmail = combined.includes("mother") || combined.includes("email");
+
+  return (hasParent && hasContact && !isMotherOrEmail);
+};
 
 const StageDetails = ({
   stage,
@@ -33,12 +48,10 @@ const StageDetails = ({
   // Verification State persists in localStorage tied to student ID
   const storageKey = `verifiedStatus_${student?._id || "default"}`;
   const [verifiedStatus, setVerifiedStatus] = useState(() => {
-    if (typeof window === "undefined") return { fatherMobile: false, motherMobile: false, email: false };
+    if (typeof window === "undefined") return { fatherMobile: false };
     const saved = localStorage.getItem(storageKey);
     return saved ? JSON.parse(saved) : {
       fatherMobile: false,
-      motherMobile: false,
-      email: false,
     };
   });
 
@@ -52,6 +65,12 @@ const StageDetails = ({
   const handleFileChange = async (key: string, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    // File Size Check: 5MB limit
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+      return toast.error("File size must be less than 5MB");
+    }
 
     if (!student?._id) return toast.error("Student ID missing");
 
@@ -87,33 +106,35 @@ const StageDetails = ({
   const isActiveStage = stage.status === "active";
   const fields: any[] = stage.fields || [];
 
+  useEffect(() => {
+    console.log("DEBUG: All Stage Fields:", fields.map(f => ({ key: f.key, label: f.displayName, isFather: isFatherMobileField(f) })));
+  }, [fields]);
+
   const fatherMobile = student.fatherMobile || student.fatherMobileNumber || "";
   const motherMobile = student.motherMobile || student.motherMobileNumber || "";
   const email = student.email || "";
 
-  const allVerified = verifiedStatus.fatherMobile && verifiedStatus.motherMobile && verifiedStatus.email;
+  const allVerified = verifiedStatus.fatherMobile;
 
   const handleEditClick = () => {
-    if (!allVerified) {
-      setShowVerification({ ...showVerification, open: true });
-    } else {
-      setEditMode((p) => !p);
+    setEditMode(true);
+  };
+
+  const onVerified = (type: string, verifiedValue?: string) => {
+    if (type === "Father Mobile") {
+      setVerifiedStatus((p: any) => ({ ...p, fatherMobile: true }));
+      setEditMode(true);
+      setShowVerification((p) => ({ ...p, open: false }));
+
+      if (verifiedValue) {
+        // Find which key the stage uses for father mobile
+        const fKey = fields.find((f: any) => isFatherMobileField(f))?.key || "fatherMobile";
+        onChange(fKey, verifiedValue);
+      }
     }
   };
 
-  const onVerified = (type: string) => {
-    if (type === "Father Mobile") setVerifiedStatus((p: any) => ({ ...p, fatherMobile: true }));
-    if (type === "Mother Mobile") setVerifiedStatus((p: any) => ({ ...p, motherMobile: true }));
-    if (type === "Email") setVerifiedStatus((p: any) => ({ ...p, email: true }));
-    // Don't close immediately here, the Gate handles switching. 
-    // If all are verified, Gate might stay open or close.
-  };
-
-  const verificationItems = [
-    { type: "Father Mobile" as const, value: fatherMobile, verified: verifiedStatus.fatherMobile },
-    { type: "Mother Mobile" as const, value: motherMobile, verified: verifiedStatus.motherMobile },
-    { type: "Email" as const, value: email, verified: verifiedStatus.email },
-  ]; // Pass all items, even if value is empty, so student can fill them in.
+  const verificationItem = { type: "Father Mobile" as const, value: formData.fatherMobileNumber || formData.fatherMobile || fatherMobile, verified: verifiedStatus.fatherMobile };
 
   // ── Group fields into tabs dynamically ───────────
   // We look for 'groupName' or 'group' from the API.
@@ -148,8 +169,23 @@ const StageDetails = ({
     const hasEdited = Object.prototype.hasOwnProperty.call(formData, field.key);
     const value = hasEdited ? formData[field.key] : original;
 
-    // A field is "locked" if it already has a value in the student record.
-    const isLocked = isFilled(original);
+    if (isFatherMobileField(field)) {
+      console.log("Checking Father Mobile Field:", { key: field.key, name: field.displayName, verified: verifiedStatus.fatherMobile, value });
+    }
+
+    // A field is "locked" if it's filled AND in the Personal Details group AND matches specific keys (name, phone, email)
+    const isLockableKey = ["name", "phone", "email"].some(k =>
+      field.key.toLowerCase().includes(k)
+    );
+    const group = (field.groupBy || field.groupName || field.group || "Personal Information").toLowerCase();
+    const isPersonalGroup = group.includes("personal");
+
+    // A field is "locked" if it's filled AND (it's a specific personal detail OR a father mobile field)
+    const isLocked = isFilled(original) && ((isPersonalGroup && isLockableKey) || isFatherMobileField(field));
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+      onChange(field.key, e.target.value);
+    };
 
     return (
       <div key={field._id} className="flex flex-col gap-1">
@@ -236,7 +272,7 @@ const StageDetails = ({
             <select
               className="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-400 transition-colors"
               value={value ?? ""}
-              onChange={(e) => onChange(field.key, e.target.value)}
+              onChange={handleChange}
             >
               <option value="">Select</option>
               {(field.options || []).map((opt: string) => (
@@ -250,14 +286,43 @@ const StageDetails = ({
               type="date"
               className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-400 transition-colors"
               value={value ? value.slice(0, 10) : ""}
-              onChange={(e) => onChange(field.key, e.target.value)}
+              onChange={handleChange}
             />
           ) : (
-            <input
-              className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-400 transition-colors"
-              value={value ?? ""}
-              onChange={(e) => onChange(field.key, e.target.value)}
-            />
+            <div className="flex flex-col gap-1 w-full">
+              <input
+                className={`w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-400 transition-colors ${isFatherMobileField(field) && !verifiedStatus.fatherMobile ? "cursor-pointer bg-orange-50/50 hover:bg-orange-50 border-orange-200 ring-1 ring-orange-200" : ""}`}
+                value={value ?? ""}
+                onChange={handleChange}
+                onClick={(e) => {
+                  if (isFatherMobileField(field) && !verifiedStatus.fatherMobile) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setShowVerification({ open: true, type: "Father Mobile", value: value || fatherMobile });
+                  }
+                }}
+                onFocus={(e) => {
+                  if (isFatherMobileField(field) && !verifiedStatus.fatherMobile) {
+                    e.target.blur();
+                    setShowVerification({ open: true, type: "Father Mobile", value: value || fatherMobile });
+                  }
+                }}
+                readOnly={isFatherMobileField(field) && !verifiedStatus.fatherMobile}
+              />
+              {isFatherMobileField(field) && !verifiedStatus.fatherMobile && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setShowVerification({ open: true, type: "Father Mobile", value: value || fatherMobile });
+                  }}
+                  className="w-full py-1 text-[10px] font-bold uppercase tracking-wider bg-orange-600 text-white rounded-md hover:bg-orange-700 transition-colors"
+                >
+                  Verify Number Now
+                </button>
+              )}
+            </div>
           )
         ) : (
           (field.fieldType?.toUpperCase() === "FILE") ? (
@@ -287,12 +352,38 @@ const StageDetails = ({
             </div>
           ) : (
             <div
-              className={`border rounded-lg px-3 py-2 text-sm min-h-[38px] flex items-center justify-between ${editMode && isLocked ? "bg-gray-100/50 text-gray-500 border-dashed" : "bg-gray-50 text-gray-700"
+              className={`border rounded-lg px-3 py-2 text-sm min-h-[38px] flex items-center justify-between ${isFatherMobileField(field) && !verifiedStatus.fatherMobile
+                ? "bg-orange-50/50 text-orange-700 border-orange-300 cursor-pointer hover:bg-orange-50 border-dashed"
+                : editMode && isLocked ? "bg-gray-100/50 text-gray-500 border-dashed" : "bg-gray-50 text-gray-700"
                 }`}
+              onClick={() => {
+                if (isFatherMobileField(field) && !verifiedStatus.fatherMobile) {
+                  console.log("Div Father Mobile onClick Triggered");
+                  setShowVerification({ open: true, type: "Father Mobile", value: value || fatherMobile });
+                }
+              }}
+              onMouseDown={() => {
+                if (isFatherMobileField(field) && !verifiedStatus.fatherMobile) {
+                  setShowVerification({ open: true, type: "Father Mobile", value: value || fatherMobile });
+                }
+              }}
             >
               <span className="truncate flex-1">
                 {isFilled(value) ? (field.fieldType === "date" && typeof value === "string" ? value.slice(0, 10) : value) : "-"}
               </span>
+              {isFatherMobileField(field) && !verifiedStatus.fatherMobile && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    console.log("View Mode Verify Button Clicked");
+                    setShowVerification({ open: true, type: "Father Mobile", value: value || fatherMobile });
+                  }}
+                  className="text-[10px] bg-orange-600 text-white px-2 py-1 rounded-md font-extrabold shadow-sm hover:bg-orange-700 transition-colors shrink-0"
+                >
+                  VERIFY NOW
+                </button>
+              )}
             </div>
           )
         )}
@@ -309,20 +400,11 @@ const StageDetails = ({
           <h3 className="font-bold text-gray-900 text-lg sm:text-base">{stage.stage}</h3>
           <div className="flex flex-wrap items-center gap-2 mt-1 sm:mt-0.5">
             <span className="text-[10px] sm:text-[11px] font-bold bg-orange-50 text-orange-600 px-2 py-0.5 rounded-full uppercase tracking-wide border border-orange-100">{stage.status}</span>
-            {allVerified ? (
-              <span className="flex items-center gap-1 text-[10px] text-green-600 font-bold uppercase py-0.5">
-                <CheckCircle2 size={10} /> Account Verified
-              </span>
-            ) : (
-              <span className="flex items-center gap-1 text-[10px] text-red-500 font-bold uppercase py-0.5">
-                <ShieldAlert size={10} /> Verification Pending
-              </span>
-            )}
           </div>
         </div>
 
         {isActiveStage && (
-          <div className="flex gap-2 w-full sm:w-auto mt-2 sm:mt-0">
+          <div className="flex gap-2">
             <button
               onClick={handleEditClick}
               className={`flex-1 sm:flex-none text-[11px] sm:text-xs font-bold px-3 sm:px-4 py-2 rounded-xl border-2 transition-all shadow-sm flex items-center justify-center gap-2 
@@ -333,7 +415,7 @@ const StageDetails = ({
                     : "bg-white border-orange-200 text-orange-600 hover:bg-orange-50"
                 }`}
             >
-              {editMode ? "Cancel" : allVerified ? "✏️ Edit Details" : "🛡️ Verify to Edit"}
+              {editMode ? "Cancel" : "✏️ Edit Details"}
             </button>
             {editMode && (
               <button
@@ -352,7 +434,7 @@ const StageDetails = ({
 
       {showVerification.open && (
         <VerificationGate
-          items={verificationItems}
+          item={verificationItem}
           onVerified={onVerified}
           onCancel={() => setShowVerification({ ...showVerification, open: false })}
         />
@@ -407,7 +489,7 @@ const StageDetails = ({
           </div>
         )}
       </div>
-    </div>
+    </div >
   );
 };
 

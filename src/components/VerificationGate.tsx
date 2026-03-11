@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { sendOtp, verifyOtp } from "../services/authService";
 import toast from "react-hot-toast";
-import { X, ShieldCheck, Mail, Phone, Lock, ChevronLeft, ChevronRight, CheckCircle2 } from "lucide-react";
+import { X, ShieldCheck, Mail, Phone, Lock, CheckCircle2 } from "lucide-react";
 
 interface VerificationItem {
     type: "Father Mobile" | "Mother Mobile" | "Email";

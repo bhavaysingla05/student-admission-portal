@@ -54,7 +54,7 @@ export const useRazorpay = () => {
   }, []);
 
   const payNow = useCallback(
-    async (stage: any, student: any, preloadedStageSetup?: any) => {
+    async (stage: any, student: any, preloadedStageSetup?: any, overrideAmount?: number) => {
       setStatus("loading");
       setError(null);
       setPaymentResult(null);
@@ -70,10 +70,26 @@ export const useRazorpay = () => {
         const stageSetup = stageSetupRes.data;
 
         // ── Resolve amount by comparing course+stream in txnMapping ──────────
-        const { amount: totalPaybleAmount, receipt } = resolveTxnAmount(
+        let { amount: totalPaybleAmount, receipt } = resolveTxnAmount(
           stageSetup,
           student
         );
+
+        if (overrideAmount !== undefined && overrideAmount !== null) {
+          totalPaybleAmount = overrideAmount;
+          let pool = overrideAmount;
+          // Distribute the total edited amount sequentially (top-down)
+          for (let i = 0; i < receipt.length; i++) {
+            if (i === receipt.length - 1) {
+              receipt[i].paidAmount = pool; // Final head takes whatever's left
+            } else {
+              const take = Math.min(pool, receipt[i].paidAmount);
+              receipt[i].paidAmount = take;
+              pool -= take;
+            }
+          }
+        }
+
         const resolvedAmount = roundUp(totalPaybleAmount);
 
         if (resolvedAmount <= 0) {

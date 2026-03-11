@@ -12,8 +12,23 @@ interface Props {
 const PayNowButton = ({ stage, student, onPaymentSuccess }: Props) => {
   const [stageSetup, setStageSetup] = useState<any | null>(null);
   const [fetchError, setFetchError] = useState<string | null>(null);
+  const [editableAmount, setEditableAmount] = useState<string>("");
 
   const { payNow, loading, status, paymentResult, error, resetPayment } = useRazorpay();
+
+  // ── Resolve amount by comparing course+stream in txnMapping ──────────
+  const resolved = stageSetup ? resolveTxnAmount(stageSetup, student) : null;
+  const initialAmount: number = resolved?.amount ?? 0;
+
+  // ── Check if amount is editable ──────────────────────────────────────────
+  // User wants to edit even if multiple heads exist.
+  const norm = (s: string) => s?.trim().toLowerCase() ?? "";
+  const match = stageSetup?.txnMapping?.find(
+    (m: any) =>
+      norm(m.course) === norm(student.course) &&
+      norm(m.stream) === norm(student.stream)
+  );
+  const isEditable = match?.amountEditable;
 
   // ── Fetch stage payment details on mount ────────────────────────────────────
   useEffect(() => {
@@ -22,6 +37,13 @@ const PayNowButton = ({ stage, student, onPaymentSuccess }: Props) => {
       .then((res) => setStageSetup(res.data))
       .catch((e) => setFetchError(e?.message ?? "Failed to load payment details."));
   }, [stage._id]);
+
+  // ── Sync editableAmount with resolved amount ──────────────────────────────
+  useEffect(() => {
+    if (initialAmount > 0) {
+      setEditableAmount(initialAmount.toString());
+    }
+  }, [initialAmount]);
 
   // ── Notify parent on success (fired only once per payment) ─────────────────
   const successCalledRef = useRef(false);
@@ -36,9 +58,7 @@ const PayNowButton = ({ stage, student, onPaymentSuccess }: Props) => {
     }
   }, [status, onPaymentSuccess]);
 
-  // Nothing to pay — calculate from txnMapping or fallback
-  const resolved = stageSetup ? resolveTxnAmount(stageSetup, student) : null;
-  const amount: number = resolved?.amount ?? 0;
+  const currentAmount = isEditable ? parseFloat(editableAmount) || 0 : initialAmount;
 
   // Check if already paid
   const isAlreadyPaid = student?.transactions?.some(
@@ -48,7 +68,7 @@ const PayNowButton = ({ stage, student, onPaymentSuccess }: Props) => {
   );
 
   // Hide button if stage is loaded but nothing to pay, OR if already paid
-  if (fetchError || isAlreadyPaid || (stageSetup && amount <= 0)) return null;
+  if (fetchError || isAlreadyPaid || (stageSetup && initialAmount <= 0)) return null;
 
   // ── Success state ────────────────────────────────────────────────────────────
   if (status === "success" && paymentResult) {
@@ -91,22 +111,69 @@ const PayNowButton = ({ stage, student, onPaymentSuccess }: Props) => {
   }
 
   // ── Pay Now button ───────────────────────────────────────────────────────────
+  const isTooSmall = currentAmount < 1000;
+  const isTooLarge = currentAmount > initialAmount;
+  const isAmountValid = !isTooSmall && !isTooLarge;
+
   return (
     <div className="mt-4 pt-4 border-t border-gray-100">
       {/* Amount breakdown (if stage setup is loaded) */}
-      {stageSetup && amount > 0 && (
-        <div className="mb-3 flex items-center gap-2 text-sm text-gray-600">
-          <IndianRupee size={14} className="text-orange-500 shrink-0" />
-          <span>
-            Amount due for <span className="font-semibold text-gray-800">{stage.stage}</span>:{" "}
-            <span className="font-bold text-orange-600 text-base">₹{amount}</span>
-          </span>
+      {stageSetup && initialAmount > 0 && (
+        <div className="mb-4">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <IndianRupee size={14} className="text-orange-500 shrink-0" />
+              <span>
+                Total for <span className="font-semibold text-gray-800">{stage.stage}</span>
+              </span>
+            </div>
+
+            {isEditable ? (
+              <div className="relative max-w-[140px]">
+                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-orange-600 font-bold text-base">₹</span>
+                <input
+                  type="number"
+                  value={editableAmount}
+                  onChange={(e) => setEditableAmount(e.target.value)}
+                  placeholder="0"
+                  className={`
+                    w-full pl-6 pr-3 py-1 bg-orange-50/30 border-2 
+                    ${!isAmountValid ? 'border-red-200 focus:border-red-500 focus:ring-red-500/10' : 'border-orange-100 focus:border-orange-500 focus:ring-orange-500/10'}
+                    rounded-lg font-bold text-orange-600 text-lg text-right
+                    focus:bg-white focus:outline-none focus:ring-4
+                    transition-all duration-200
+                  `}
+                />
+              </div>
+            ) : (
+              <span className="font-bold text-orange-600 text-lg">₹{initialAmount}</span>
+            )}
+          </div>
+
+          {isEditable && (
+            <div className="mt-1 flex justify-between items-center px-1">
+              {isTooSmall && (
+                <span className="text-[11px] text-red-500 font-medium">Min. ₹1,000 required</span>
+              )}
+              {isTooLarge && (
+                <span className="text-[11px] text-red-500 font-medium">Max. ₹{initialAmount.toLocaleString()} allowed</span>
+              )}
+              {initialAmount !== currentAmount && (
+                <button 
+                  onClick={() => setEditableAmount(initialAmount.toString())}
+                  className="ml-auto text-[11px] text-orange-500 hover:text-orange-600 font-semibold"
+                >
+                  Reset
+                </button>
+              )}
+            </div>
+          )}
         </div>
       )}
 
       <button
-        disabled={loading || !stageSetup || amount <= 0}
-        onClick={() => payNow(stage, student, stageSetup)}
+        disabled={loading || !stageSetup || currentAmount <= 0 || !isAmountValid}
+        onClick={() => payNow(stage, student, stageSetup, isEditable ? currentAmount : undefined)}
         className="
           w-full flex items-center justify-center gap-2
           bg-orange-500 hover:bg-orange-600
@@ -129,7 +196,7 @@ const PayNowButton = ({ stage, student, onPaymentSuccess }: Props) => {
         ) : (
           <>
             <IndianRupee size={16} />
-            Pay ₹{amount} Now
+            Pay ₹{currentAmount} Now
           </>
         )}
       </button>

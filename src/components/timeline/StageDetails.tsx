@@ -191,7 +191,7 @@ const StageDetails = ({
           <label className="text-[11px] text-gray-400 font-medium uppercase tracking-wide">
             {field.displayName}
           </label>
-          {editMode && isLocked && isActiveStage && (
+          {editMode && isLocked && (
             <span
               title="Locked"
               className="cursor-help flex items-center opacity-90 hover:opacity-100 transition-opacity"
@@ -201,7 +201,7 @@ const StageDetails = ({
           )}
         </div>
 
-        {editMode && isActiveStage && !isLocked ? (
+        {editMode && !isLocked ? (
           (field.fieldType?.toUpperCase() === "FILE") ? (
             <div className="relative group">
               <input
@@ -401,33 +401,31 @@ const StageDetails = ({
           </div>
         </div>
 
-        {isActiveStage && (
-          <div className="flex gap-2">
+        <div className="flex gap-2">
+          <button
+            onClick={handleEditClick}
+            className={`flex-1 sm:flex-none text-[11px] sm:text-xs font-bold px-3 sm:px-4 py-2 rounded-xl border-2 transition-all shadow-sm flex items-center justify-center gap-2 
+              ${!allVerified
+                ? "bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100"
+                : editMode
+                  ? "bg-white border-gray-200 text-gray-600 hover:bg-gray-50"
+                  : "bg-white border-orange-200 text-orange-600 hover:bg-orange-50"
+              }`}
+          >
+            {editMode ? "Cancel" : "✏️ Edit Details"}
+          </button>
+          {editMode && (
             <button
-              onClick={handleEditClick}
-              className={`flex-1 sm:flex-none text-[11px] sm:text-xs font-bold px-3 sm:px-4 py-2 rounded-xl border-2 transition-all shadow-sm flex items-center justify-center gap-2 
-                ${!allVerified
-                  ? "bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100"
-                  : editMode
-                    ? "bg-white border-gray-200 text-gray-600 hover:bg-gray-50"
-                    : "bg-white border-orange-200 text-orange-600 hover:bg-orange-50"
-                }`}
+              onClick={onSave}
+              disabled={saving}
+              className="flex-1 sm:flex-none text-[11px] sm:text-xs font-bold px-3 sm:px-4 py-2 rounded-xl bg-orange-500 text-white hover:bg-orange-600 disabled:opacity-50 transition-all shadow-md shadow-orange-100 flex items-center justify-center gap-2"
             >
-              {editMode ? "Cancel" : "✏️ Edit Details"}
+              {saving ? (
+                <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              ) : "💾 Save Changes"}
             </button>
-            {editMode && (
-              <button
-                onClick={onSave}
-                disabled={saving}
-                className="flex-1 sm:flex-none text-[11px] sm:text-xs font-bold px-3 sm:px-4 py-2 rounded-xl bg-orange-500 text-white hover:bg-orange-600 disabled:opacity-50 transition-all shadow-md shadow-orange-100 flex items-center justify-center gap-2"
-              >
-                {saving ? (
-                  <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                ) : "💾 Save Changes"}
-              </button>
-            )}
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {showVerification.open && (

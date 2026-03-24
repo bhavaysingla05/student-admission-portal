@@ -30,11 +30,18 @@ const Timeline = ({
 
   const currentSeq = currentStageObj?.sequence ?? 0;
 
+  const isApproved = student.currentStage?.toLowerCase() === "approved";
+
   const enrichedStages = orderedStages.map((stage) => {
     let status: "completed" | "active" | "pending" = "pending";
 
-    if (stage.sequence < currentSeq) status = "completed";
-    else if (stage.sequence === currentSeq) status = "active";
+    if (isApproved) {
+      status = "completed";
+    } else if (stage.sequence < currentSeq) {
+      status = "completed";
+    } else if (stage.sequence === currentSeq) {
+      status = "active";
+    }
 
     return { ...stage, status };
   });
